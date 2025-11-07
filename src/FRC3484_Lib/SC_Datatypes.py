@@ -1,24 +1,20 @@
-from wpimath.units import degrees, amperes, seconds
+from wpimath.units import degrees, amperes, seconds, volts
 
 from dataclasses import dataclass
 
 @dataclass
 class SC_SwerveConfigs:
-    def __init__(self, CAN_ID: int, SteerMotorPort: int, EncoderPort: int, EncoderOffset: degrees):
-        self.CAN_ID = CAN_ID
-        self.SteerMotorPort = SteerMotorPort
-        self.EncoderPort = EncoderPort
-        self.EncoderOffset = EncoderOffset
+    can_id: int
+    steer_motor_port: int
+    encoder_port: int
+    encoder_offset: degrees
 
 @dataclass
 class SC_SwervePID:
-    def __init__(self, Kp: int, Ki: int, Kd: int, V: int, A: int, S: int):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.V = V
-        self.A = A
-        self.S = S
+    Kp: float
+    Ki: float
+    Kd: float
+    Kf: float
 
 @dataclass
 class SC_SwerveCurrents:
