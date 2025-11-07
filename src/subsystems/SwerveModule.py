@@ -1,6 +1,9 @@
 import math
 
-import phoenix6
+from phoenix6.hardware import TalonFX, CANcoder
+from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration, CurrentLimitsConfigs, MagnetSensorConfigs
+from phoenix6.signals import NeutralModeValue
+
 from wpimath.trajectory import TrapezoidProfile
 from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians
 from wpimath.units import seconds, volts
@@ -13,13 +16,13 @@ from ..FRC3484_Lib.SC_Datatypes import SC_SwerveConfigs, SC_SwervePID, SC_Swerve
 class SwerveModule:
     def __init__(self, corner: SC_SwerveConfigs, pid_struct: SC_SwervePID, drivetrain_canbus_name: str = "rio") -> None:
         # Create objects
-        self.drive_motor: phoenix6.hardware.TalonFX = phoenix6.hardware.TalonFX(corner.CAN_ID, drivetrain_canbus_name)
-        self.steer_motor: phoenix6.hardware.TalonFX = phoenix6.hardware.TalonFX(corner.SteerMotorPort, drivetrain_canbus_name)
-        self.steer_encoder: phoenix6.hardware.CANcoder = phoenix6.hardware.CANcoder(corner.EncoderPort, drivetrain_canbus_name)
+        self.drive_motor: TalonFX = TalonFX(corner.CAN_ID, drivetrain_canbus_name)
+        self.steer_motor: TalonFX = TalonFX(corner.SteerMotorPort, drivetrain_canbus_name)
+        self.steer_encoder: CANcoder = CANcoder(corner.EncoderPort, drivetrain_canbus_name)
 
-        self.drive_motor_config: phoenix6.configs.TalonFXConfiguration = phoenix6.configs.TalonFXConfiguration()
-        self.steer_motor_config: phoenix6.configs.TalonFXConfiguration = phoenix6.configs.TalonFXConfiguration()
-        self.encoder_config: phoenix6.configs.CANcoderConfiguration = phoenix6.configs.CANcoderConfiguration()
+        self.drive_motor_config: TalonFXConfiguration = TalonFXConfiguration()
+        self.steer_motor_config: TalonFXConfiguration = TalonFXConfiguration()
+        self.encoder_config: CANcoderConfiguration = CANcoderConfiguration()
 
         self.drive_pid_controller = PIDController(0, 0, 0)
 
@@ -38,7 +41,7 @@ class SwerveModule:
         # Set up configs
         self.swerve_current_constants: SC_SwerveCurrents = SC_SwerveCurrents()
 
-        self.drive_current_limit: phoenix6.configs.CurrentLimitsConfigs = phoenix6.configs.CurrentLimitsConfigs()
+        self.drive_current_limit: CurrentLimitsConfigs = CurrentLimitsConfigs()
         self.drive_current_limit \
             .with_supply_current_limit_enable(self.swerve_current_constants.CurrentLimitEnable) \
             .with_supply_current_limit(self.swerve_current_constants.CurrentLimitDrive) \
@@ -51,7 +54,7 @@ class SwerveModule:
         self.setBrakeMode()
         self.resetEncoder()
 
-        self.steer_current_limit: phoenix6.configs.CurrentLimitsConfigs = phoenix6.configs.CurrentLimitsConfigs()
+        self.steer_current_limit: CurrentLimitsConfigs = CurrentLimitsConfigs()
         self.steer_current_limit \
             .with_supply_current_limit_enable(self.swerve_current_constants.CurrentLimitEnable) \
             .with_supply_current_limit(self.swerve_current_constants.CurrentLimitSteer) \
@@ -60,12 +63,12 @@ class SwerveModule:
 
         self.steer_motor_config.current_limits = self.steer_current_limit
         self.steer_motor_config.motor_output.inverted = self.swerve_current_constants.SteerMotorReversed
-        self.steer_motor_config.motor_output.neutral_mode = phoenix6.signals.NeutralModeValue.BRAKE
+        self.steer_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
 
         self.steer_motor.configurator.apply(self.steer_motor_config)
 
         # Set up encoder configs
-        self.encoder_magnet_config: phoenix6.configs.MagnetSensorConfigs = phoenix6.configs.MagnetSensorConfigs()
+        self.encoder_magnet_config: MagnetSensorConfigs = MagnetSensorConfigs()
         self.encoder_magnet_config \
             .with_magnet_offset(corner.EncoderOffset) \
             .with_sensor_direction(self.swerve_current_constants.EncoderReversed) \
@@ -111,16 +114,16 @@ class SwerveModule:
     # Private
     def getWheelSpeed(self) -> float:
         # TODO: Is getVelocity() an actual function?
-        return SwerveModuleConstants.WHEEL_RADIUS * (self.drive_motor.getVelocity().getValue() / SwerveModuleConstants.DRIVE_GEAR_RATIO) / 1 / SwerveModuleConstants.DRIVE_RATIO_SCALE
+        return SwerveModuleConstants.WHEEL_RADIUS * (self.drive_motor.get_velocity().value / SwerveModuleConstants.DRIVE_GEAR_RATIO) / SwerveModuleConstants.DRIVE_RATIO_SCALE
 
     # Private
     def getWheelPosition(self) -> float:
-        return SwerveModuleConstants.WHEEL_RADIUS * (self.drive_motor.getPosition().getValue() / SwerveModuleConstants.DRIVE_GEAR_RATIO) / 1 / SwerveModuleConstants.DRIVE_RATIO_SCALE
+        return SwerveModuleConstants.WHEEL_RADIUS * (self.drive_motor.get_position().value / SwerveModuleConstants.DRIVE_GEAR_RATIO) / SwerveModuleConstants.DRIVE_RATIO_SCALE
 
     # Private
     def getSteerAngle(self) -> float:
         # TODO: Is getAbsolutePosition() an actual function?
-        return self.steer_encoder.getAbsolutePosition().getValue()
+        return self.steer_encoder.get_absolute_position().value
 
     def stopMotors(self) -> None:
         self.drive_motor.set(0)
@@ -128,12 +131,12 @@ class SwerveModule:
 
     def resetEncoder(self) -> None:
         # TODO: Is setPosition() an actual function?
-        self.drive_motor.setPosition(0)
+        self.drive_motor.set_position(0)
 
     def setCoastMode(self) -> None:
-        self.drive_motor_config.motor_output.neutral_mode = phoenix6.signals.NeutralModeValue.COAST
+        self.drive_motor_config.motor_output.neutral_mode = NeutralModeValue.COAST
         self.drive_motor.configurator.apply(self.drive_motor_config)
 
     def setBrakeMode(self) -> None:
-        self.drive_motor_config.motor_output.neutral_mode = phoenix6.signals.NeutralModeValue.BRAKE
+        self.drive_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
         self.drive_motor.configurator.apply(self.drive_motor_config)
