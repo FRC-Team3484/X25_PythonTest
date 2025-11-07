@@ -1,16 +1,17 @@
 import math
 
 import phoenix6
-from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians, TrapezoidProfile
+from wpimath.trajectory import TrapezoidProfile
+from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians
 from wpimath.units import seconds, volts
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from wpimath.geometry import Rotation2d
 
 from constants import SwerveModuleConstants
-from FRC3484_Lib import SC_Datatypes
+from ..FRC3484_Lib.SC_Datatypes import SC_SwerveConfigs, SC_SwervePID, SC_SwerveCurrents
 
 class SwerveModule:
-    def __init__(self, corner: SC_Datatypes.SC_SwerveConfigs, pid_struct: SC_Datatypes.SC_SwervePID, drivetrain_canbus_name: str = "rio") -> None:
+    def __init__(self, corner: SC_SwerveConfigs, pid_struct: SC_SwervePID, drivetrain_canbus_name: str = "rio") -> None:
         # Create objects
         self.drive_motor: phoenix6.hardware.TalonFX = phoenix6.hardware.TalonFX(corner.CAN_ID, drivetrain_canbus_name)
         self.steer_motor: phoenix6.hardware.TalonFX = phoenix6.hardware.TalonFX(corner.SteerMotorPort, drivetrain_canbus_name)
@@ -35,7 +36,7 @@ class SwerveModule:
 
 
         # Set up configs
-        self.swerve_current_constants: SC_Datatypes.SC_SwerveCurrents = SC_Datatypes.SC_SwerveCurrents()
+        self.swerve_current_constants: SC_SwerveCurrents = SC_SwerveCurrents()
 
         self.drive_current_limit: phoenix6.configs.CurrentLimitsConfigs = phoenix6.configs.CurrentLimitsConfigs()
         self.drive_current_limit \
@@ -45,7 +46,7 @@ class SwerveModule:
             .with_supply_current_lower_time(self.swerve_current_constants.DriveCurrentTime)
 
         self.drive_motor_config.current_limits = self.drive_current_limit
-        self.drive_motor_config.open_loop_ramps.duty_cycle_open_loop_ramp_period: seconds = 0.25
+        self.drive_motor_config.open_loop_ramps.duty_cycle_open_loop_ramp_period = 0.25
         self.drive_motor.configurator.apply(self.drive_motor_config)
         self.setBrakeMode()
         self.resetEncoder()
