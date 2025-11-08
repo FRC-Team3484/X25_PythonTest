@@ -1,17 +1,61 @@
-from wpimath.units import feet_per_second, inches, radians_per_second, radians_per_second_squared
 from dataclasses import dataclass
 
-@dataclass
-class SwerveModuleConstants:
-    MAX_WHEEL_SPEED: feet_per_second = 8.0
-    WHEEL_RADIUS: inches = 2.0
-    DRIVE_GEAR_RATIO: float = 36000.0/5880.0
-    DRIVE_RATIO_SCALE: float = 1.0
+from wpimath.geometry import Translation2d
+from wpimath.units import inches, meters_per_second, feetToMeters
 
-    @dataclass
-    class SteerPIDConstants:
-        Kp: float = 0.5
-        Ki: float = 0.0
-        Kd: float = 0.0
-        MAX_SPEED: radians_per_second = 12.0
-        MAX_ACCELERATION: radians_per_second_squared = 100.0
+from .FRC3484_Lib.SC_Datatypes import *
+
+@dataclass(frozen=True)
+class SwerveConstants:
+    FL: int = 0
+    FR: int = 1
+    BL: int = 2
+    BR: int = 3
+
+    CANBUS_NAME: str = "Drivetrain CANivore"
+    PIGEON_ID: int = 22
+
+    DRIVETRAIN_WIDTH: inches = 24.0
+    DRIVETRAIN_LENGTH: inches = 24.0
+
+    WHEEL_RADIUS: inches = 2.0
+    GEAR_RATIO: float = 36000.0/5880.0
+    DRIVE_SCALING: float = 1.0
+    STEER_RATIO: float = 12.8 # Ratio from steer motor to wheel, steer encoder is 1:1
+    MAX_WHEEL_SPEED: meters_per_second = feetToMeters(8.0) # feet per second
+
+    MODULE_POSITIONS: tuple[Translation2d] = (
+        Translation2d(DRIVETRAIN_LENGTH / 2, DRIVETRAIN_WIDTH / 2),   # Front Left
+        Translation2d(DRIVETRAIN_LENGTH / 2, -DRIVETRAIN_WIDTH / 2),  # Front Right
+        Translation2d(-DRIVETRAIN_LENGTH / 2, DRIVETRAIN_WIDTH / 2),  # Back Left
+        Translation2d(-DRIVETRAIN_LENGTH / 2, -DRIVETRAIN_WIDTH / 2), # Back Right
+    )
+
+    MODULE_CONFIGS: tuple[SC_SwerveConfig] = (
+        SC_SwerveConfig(12, 13, 18, 27.685546875, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
+        SC_SwerveConfig(10, 11, 19, 12.83203125, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
+        SC_SwerveConfig(16, 17, 21, 38.759765625, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
+        SC_SwerveConfig(14, 15, 20, 24.9609375, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
+    )
+
+    MODULE_CURRENTS: tuple[SC_SwerveCurrentConfig] = (
+        SC_SwerveCurrentConfig(),
+        SC_SwerveCurrentConfig(),
+        SC_SwerveCurrentConfig(),
+        SC_SwerveCurrentConfig()
+    )
+
+    _DRIVE_PID_CONFIG_LEFT = SC_DrivePIDConfig(0.93641, 0.0, 0.0, 2.2903, 0.39229, 0.04423)
+    _DRIVE_PID_CONFIG_RIGHT = SC_DrivePIDConfig(0.92237, 0.0, 0.0, 2.2915, 0.387, 0.041887)
+    DRIVE_PID_CONFIGS: tuple[SC_DrivePIDConfig] = (
+        _DRIVE_PID_CONFIG_LEFT,
+        _DRIVE_PID_CONFIG_RIGHT,
+        _DRIVE_PID_CONFIG_LEFT,
+        _DRIVE_PID_CONFIG_RIGHT,
+    )
+
+    STEER_PID_CONFIGS: tuple[SC_SteerPIDConfig] = tuple([
+        SC_SteerPIDConfig(0.5, 0.0, 0.0, 12, 100)
+        for _ in range(len(MODULE_CONFIGS))
+    ])
+    
