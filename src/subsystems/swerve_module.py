@@ -17,12 +17,13 @@ class SwerveModule:
     def __init__(self, config: SC_SwerveConfig, current_config: SC_SwerveCurrentConfig, drive_pid_config: SC_DrivePIDConfig, steer_pid_config: SC_SteerPIDConfig, canbus_name: str = "rio") -> None:
         '''
         Initializes a Swerve Module with the given configuration
+
         Parameters:
-            config (SC_SwerveConfig): Hardware CAN IDs and physical properties of the module
-            current_config (SC_SwerveCurrentConfig): Current limit settings for the drive and steer motors
-            drive_pid_config (SC_DrivePIDConfig): PID values for the drive motor
-            steer_pid_config (SC_SteerPIDConfig): PID values for the steer motor
-            canbus_name (str): The name of the CAN bus the motors and encoders are on (default: "rio")
+            - config (SC_SwerveConfig): Hardware CAN IDs and physical properties of the module
+            - current_config (SC_SwerveCurrentConfig): Current limit settings for the drive and steer motors
+            - drive_pid_config (SC_DrivePIDConfig): PID values for the drive motor
+            - steer_pid_config (SC_SteerPIDConfig): PID values for the steer motor
+            - canbus_name (str): The name of the CAN bus the motors and encoders are on (default: "rio")
         '''
         
         '''
@@ -94,12 +95,13 @@ class SwerveModule:
     def set_desired_state(self, state: SwerveModuleState, open_loop: bool = True, optimize: bool = True) -> None:
         '''
         Sets the desired state for the swerve module
+
         Parameters:
-            state (SwerveModuleState): The desired state (wheel speed and steer angle) for the module
-            open_loop (bool): 
-                - **True**: treat speed as a percent power from -1.0 to 1.0
-                - **False**: treat speed as a velocity in meters per second
-            optimize (bool): Whether to optimize the steering angle to minimize rotation
+            - state (SwerveModuleState): The desired state (wheel speed and steer angle) for the module
+            - open_loop (bool): 
+                - True: treat speed as a percent power from -1.0 to 1.0
+                - False: treat speed as a velocity in meters per second
+            - optimize (bool): Whether to optimize the steering angle to minimize rotation
         '''
         encoder_rotation: Rotation2d = self.get_steer_angle()
 
@@ -140,8 +142,10 @@ class SwerveModule:
     def get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
         '''
         Gets the current speed of the wheel
+
         Parameters:
-            distance_units (str): 'feet' or 'meters'
+            - distance_units (str): 'feet' or 'meters'
+
         Returns:
             The speed of the wheel in the specified distance units per second
         '''
@@ -154,8 +158,10 @@ class SwerveModule:
     def get_wheel_position(self, distance_units: Literal['inches', 'feet', 'meters']) -> float:
         '''
         Gets the current position of the wheel
+
         Parameters:
-            distance_units (str): 'inches', 'feet', or 'meters'
+            - distance_units (str): 'inches', 'feet', or 'meters'
+
         Returns:
             The position of the wheel in the specified distance units
         '''

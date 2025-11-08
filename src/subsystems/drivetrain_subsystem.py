@@ -24,8 +24,8 @@ class DrivetrainSubsystem(Subsystem):
         Drivetrain configs are pulled directly from SwerveConstants
 
         Parameters:
-            vision: Vision subsystem (optional, for pose correction)
-            oi: Operator Interface subsystem (optional, for disabling vision)
+            - vision: Vision subsystem (optional, for pose correction)
+            - oi: Operator Interface subsystem (optional, for disabling vision)
         '''
         super().__init__()
 
@@ -112,12 +112,12 @@ class DrivetrainSubsystem(Subsystem):
         Used by teleop control
 
         Parameters:
-            x_speed (meters_per_second): The desired speed in the x direction (forward)
-            y_speed (meters_per_second): The desired speed in the y direction (sideways)
-            rot_speed (radians_per_second): The desired rotational speed
-            open_loop (bool):
-                - **True**: treat speed as a percent power from -1.0 to 1.0
-                - **False**: treat speed as a velocity in meters per second
+            - x_speed (meters_per_second): The desired speed in the x direction (forward)
+            - y_speed (meters_per_second): The desired speed in the y direction (sideways)
+            - rot_speed (radians_per_second): The desired rotational speed
+            - open_loop (bool):
+                True: treat speed as a percent power from -1.0 to 1.0
+                False: treat speed as a velocity in meters per second
         '''
         speeds: ChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             x_speed,
@@ -134,10 +134,10 @@ class DrivetrainSubsystem(Subsystem):
         Used by the autonomous drive controller
 
         Parameters:
-            speeds (ChassisSpeeds): The desired chassis speeds
-            open_loop (bool):
-                - **True**: treat speed as a percent power from -1.0 to 1.0
-                - **False**: treat speed as a velocity in meters per second
+            - speeds (ChassisSpeeds): The desired chassis speeds
+            - open_loop (bool):
+                - True: treat speed as a percent power from -1.0 to 1.0
+                - False: treat speed as a velocity in meters per second
         '''
         states: list[SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds)
         self.set_module_states(states, open_loop, optimize=True)
@@ -147,13 +147,13 @@ class DrivetrainSubsystem(Subsystem):
         Converts field-centric speeds to robot-centric speeds with a specified center of rotation
 
         Parameters:
-            x_speed (meters_per_second): The desired speed in the x direction (forward)
-            y_speed (meters_per_second): The desired speed in the y direction (sideways)
-            rot_speed (radians_per_second): The desired rotational speed
-            center_of_rotation (Translation2d): The point around which the robot should rotate
-            open_loop (bool): 
-                - **True**: treat speed as a percent power from -1.0 to 1.0
-                - **False**: treat speed as a velocity in meters per second
+            - x_speed (meters_per_second): The desired speed in the x direction (forward)
+            - y_speed (meters_per_second): The desired speed in the y direction (sideways)
+            - rot_speed (radians_per_second): The desired rotational speed
+            - center_of_rotation (Translation2d): The point around which the robot should rotate
+            - open_loop (bool): 
+                - True: treat speed as a percent power from -1.0 to 1.0
+                - False: treat speed as a velocity in meters per second
         '''
         speeds: ChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             x_speed,
@@ -168,11 +168,11 @@ class DrivetrainSubsystem(Subsystem):
         Drives the robot with a specified center of rotation
 
         Parameters:
-            speeds (ChassisSpeeds): The desired chassis speeds
-            center_of_rotation (Translation2d): The point around which the robot should rotate
-            open_loop (bool): 
-                - **True**: treat speed as a percent power from -1.0 to 1.0
-                - **False**: treat speed as a velocity in meters per second
+            - speeds (ChassisSpeeds): The desired chassis speeds
+            - center_of_rotation (Translation2d): The point around which the robot should rotate
+            - open_loop (bool): 
+                - True: treat speed as a percent power from -1.0 to 1.0
+                - False: treat speed as a velocity in meters per second
         '''
         states: list[SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds, center_of_rotation)
         self.set_module_states(states, open_loop, optimize=True)
@@ -181,11 +181,11 @@ class DrivetrainSubsystem(Subsystem):
         '''
         Sets the desired states (wheel speeds and steer angles) for all drivetrain modules
         Parameters:
-            desired_states (list[SwerveModuleState]): The desired states for all modules
-            open_loop (bool): 
-                - **True**: treat speed as a percent power from -1.0 to 1.0
-                - **False**: treat speed as a velocity in meters per second
-            optimize (bool): Whether to optimize the steering angles to minimize rotation
+            - desired_states (list[SwerveModuleState]): The desired states for all modules
+            - open_loop (bool): 
+                - True: treat speed as a percent power from -1.0 to 1.0
+                - False: treat speed as a velocity in meters per second
+            - optimize (bool): Whether to optimize the steering angles to minimize rotation
         '''
         if open_loop:
             states = self._kinematics.desaturateWheelSpeeds(desired_states, 1.0)
@@ -206,8 +206,9 @@ class DrivetrainSubsystem(Subsystem):
     def set_heading(self, heading: Rotation2d) -> None:
         '''
         Sets the current heading of the robot to a specified value without changing its position
+
         Parameters:
-            heading (Rotation2d): The new heading of the robot
+            - heading (Rotation2d): The new heading of the robot
         '''
         self.reset_odometry(Pose2d(self._odometry.getEstimatedPosition().translation(), heading))
 
@@ -226,8 +227,9 @@ class DrivetrainSubsystem(Subsystem):
     def reset_odometry(self, pose: Pose2d) -> None:
         '''
         Resets the drivetrain odometry to a specified pose
+
         Parameters:
-            pose (Pose2d): The new pose of the robot
+            - pose (Pose2d): The new pose of the robot
         '''
         self._pigeon_offset = pose.rotation() - self._pigeon.getRotation2d()
         self._odometry.resetPosition(
@@ -270,6 +272,7 @@ class DrivetrainSubsystem(Subsystem):
         '''
         for module in self._modules:
             module.set_coast_mode()
+
     def set_brake_mode(self) -> None:
         '''
         Sets all drivetrain motors to brake mode
@@ -284,6 +287,6 @@ class DrivetrainSubsystem(Subsystem):
         This is purely for visualization and does not affect robot behavior
 
         Parameters:
-            pose (Pose2d): Where to show the target position on the field
+            - pose (Pose2d): Where to show the target position on the field
         '''
         self._target_position = pose
