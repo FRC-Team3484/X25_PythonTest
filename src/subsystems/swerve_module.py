@@ -7,7 +7,7 @@ from phoenix6.signals import NeutralModeValue
 
 from wpimath.trajectory import TrapezoidProfileRadians
 from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians
-from wpimath.units import seconds, meters, volts, meters_per_second, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians
+from wpimath.units import meters, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from wpimath.geometry import Rotation2d
 
@@ -28,7 +28,7 @@ class SwerveModule:
         self._drive_pid_controller: PIDController = PIDController(drive_pid_config.Kp, drive_pid_config.Ki, drive_pid_config.Kd)
         self._drive_feed_forward: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(drive_pid_config.S, drive_pid_config.V, drive_pid_config.A)
 
-        self._steer_pid_controller: ProfiledPIDControllerRadians = ProfiledPIDControllerRadians( \
+        self._steer_pid_controller: ProfiledPIDControllerRadians = ProfiledPIDControllerRadians(
             steer_pid_config.Kp,
             steer_pid_config.Ki,
             steer_pid_config.Kd,
@@ -50,8 +50,8 @@ class SwerveModule:
 
         self._drive_motor_config.open_loop_ramps.duty_cycle_open_loop_ramp_period = current_config.drive_open_loop_ramp
         self._drive_motor.configurator.apply(self._drive_motor_config)
-        self.setBrakeMode()
-        self.resetEncoder()
+        self.set_brake_mode()
+        self.reset_encoder()
 
         # Steer Motor Config
         self._steer_motor_config: TalonFXConfiguration = TalonFXConfiguration()
@@ -68,7 +68,7 @@ class SwerveModule:
         # Encoder Config
         self._encoder_config: CANcoderConfiguration = CANcoderConfiguration()
         self._encoder_config.magnet_sensor = MagnetSensorConfigs() \
-            .with_magnet_offset(config.encoder_offset) \
+            .with_magnet_offset(degreesToRotations(config.encoder_offset)) \
             .with_sensor_direction(config.encoder_reversed) \
             .with_absolute_sensor_discontinuity_point(0.5)
         

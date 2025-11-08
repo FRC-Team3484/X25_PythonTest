@@ -80,12 +80,12 @@ class SC_SwerveConfig:
     encoder_can_id: int
 
     encoder_offset: degrees
-    steer_motor_reversed: bool = True
-    encoder_reversed: bool = False
-
     wheel_radius: inches
     drive_gear_ratio: float
     drive_scaling: float = 1.0
+    
+    steer_motor_reversed: bool = True
+    encoder_reversed: bool = False
 
 @dataclass(frozen=True)
 class SC_SwerveCurrentConfig:
