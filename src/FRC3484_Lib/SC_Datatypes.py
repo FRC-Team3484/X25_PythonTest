@@ -63,11 +63,12 @@ class SC_LinearFeedForwardConfig:
 class SC_MotorConfig:
     can_id: int
     inverted: bool = False
+    can_bus_name: str = "rio"
     
+    current_limit_enabled: bool = True
     current_threshold: amperes = 50
     current_time: seconds = 0.1
     current_limit: amperes = 20
-    current_limit_enabled: bool = True
 
 '''
 Swerve Drive Datatypes

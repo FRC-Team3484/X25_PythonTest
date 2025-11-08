@@ -16,6 +16,16 @@ from ..FRC3484_Lib.SC_Datatypes import SC_SwerveConfig, SC_SwerveCurrentConfig, 
 class SwerveModule:
     def __init__(self, config: SC_SwerveConfig, current_config: SC_SwerveCurrentConfig, drive_pid_config: SC_DrivePIDConfig, steer_pid_config: SC_SteerPIDConfig, canbus_name: str = "rio") -> None:
         '''
+        Initializes a Swerve Module with the given configuration
+        Parameters:
+            config (SC_SwerveConfig): Hardware CAN IDs and physical properties of the module
+            current_config (SC_SwerveCurrentConfig): Current limit settings for the drive and steer motors
+            drive_pid_config (SC_DrivePIDConfig): PID values for the drive motor
+            steer_pid_config (SC_SteerPIDConfig): PID values for the steer motor
+            canbus_name (str): The name of the CAN bus the motors and encoders are on (default: "rio")
+        '''
+        
+        '''
         Motors and Encoders
         '''
         self._drive_motor: TalonFX = TalonFX(config.drive_can_id, canbus_name)
@@ -82,6 +92,15 @@ class SwerveModule:
         self._DRIVE_SCALING: float = config.drive_scaling
 
     def set_desired_state(self, state: SwerveModuleState, open_loop: bool = True, optimize: bool = True) -> None:
+        '''
+        Sets the desired state for the swerve module
+        Parameters:
+            state (SwerveModuleState): The desired state (wheel speed and steer angle) for the module
+            open_loop (bool): 
+                - **True**: treat speed as a percent power from -1.0 to 1.0
+                - **False**: treat speed as a velocity in meters per second
+            optimize (bool): Whether to optimize the steering angle to minimize rotation
+        '''
         encoder_rotation: Rotation2d = self.get_steer_angle()
 
         # If the wheel needs to rotate over 90 degrees, rotate the other direction and flip the output
@@ -106,13 +125,26 @@ class SwerveModule:
         self._steer_motor.set(steer_pid)
 
     def get_state(self) -> SwerveModuleState:
+        '''
+        Gets the current state of the swerve module
+        '''
         return SwerveModuleState(self.get_wheel_speed('meters'), self.get_steer_angle())
 
     def get_position(self) -> SwerveModulePosition:
+        '''
+        Gets the current position of the swerve module
+        '''
         return SwerveModulePosition(self.get_wheel_speed('meters'), self.get_steer_angle())
     
     # Private
     def get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
+        '''
+        Gets the current speed of the wheel
+        Parameters:
+            distance_units (str): 'feet' or 'meters'
+        Returns:
+            The speed of the wheel in the specified distance units per second
+        '''
         speed: meters = self._WHEEL_RADIUS * (rotationsToRadians(self._drive_motor.get_velocity().value) / self._DRIVE_GEAR_RATIO) * self._DRIVE_SCALING
         if distance_units == 'feet':
             return metersToFeet(speed)
@@ -120,6 +152,13 @@ class SwerveModule:
 
     # Private
     def get_wheel_position(self, distance_units: Literal['inches', 'feet', 'meters']) -> float:
+        '''
+        Gets the current position of the wheel
+        Parameters:
+            distance_units (str): 'inches', 'feet', or 'meters'
+        Returns:
+            The position of the wheel in the specified distance units
+        '''
         position: meters = self._WHEEL_RADIUS * (rotationsToRadians(self._drive_motor.get_position().value) / self._DRIVE_GEAR_RATIO) * self._DRIVE_SCALING
         if distance_units == 'inches':
             return metersToInches(position)
@@ -129,19 +168,34 @@ class SwerveModule:
 
     # Private
     def get_steer_angle(self) -> Rotation2d:
+        '''
+        Gets the current angle of the steer encoder as a Rotation2d
+        '''
         return Rotation2d(rotationsToRadians(self._steer_encoder.get_absolute_position().value))
 
     def stop_motors(self) -> None:
+        '''
+        Stops both the drive and steer motors
+        '''
         self._drive_motor.set(0)
         self._steer_motor.set(0)
 
     def reset_encoder(self) -> None:
+        '''
+        Resets the drive motor encoder to 0
+        '''
         self._drive_motor.set_position(0)
 
     def set_coast_mode(self) -> None:
+        '''
+        Sets the drive motor to coast mode
+        '''
         self._drive_motor_config.motor_output.neutral_mode = NeutralModeValue.COAST
         self._drive_motor.configurator.apply(self._drive_motor_config)
 
     def set_brake_mode(self) -> None:
+        '''
+        Sets the drive motor to brake mode
+        '''
         self._drive_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
         self._drive_motor.configurator.apply(self._drive_motor_config)

@@ -18,6 +18,15 @@ from ..constants import SwerveConstants
 
 class DrivetrainSubsystem(Subsystem):
     def __init__(self, vision: None = None, oi: None = None) -> None:
+        '''
+        Swerve drivetrain subsystem
+
+        Drivetrain configs are pulled directly from SwerveConstants
+
+        Parameters:
+            vision: Vision subsystem (optional, for pose correction)
+            oi: Operator Interface subsystem (optional, for disabling vision)
+        '''
         super().__init__()
 
         self._modules: list[SwerveModule] = [
@@ -69,12 +78,18 @@ class DrivetrainSubsystem(Subsystem):
         SmartDashboard.putBoolean('Drivetrain Diagnostics', False)
 
     def periodic(self) -> None:
+        '''
+        - Updates the odometry of the drivetrain
+        - Updates the field visualization on SmartDashboard
+        - Outputs diagnostic information to SmartDashboard if enabled
+        - TODO: Update odometry with vision corrections
+        '''
         self._odometry.update(
             self.get_heading(),
             self.get_module_positions()
         )
         if self._vision is not None:
-            # Vision pose correction would go here
+            # TODO: Vision pose correction would go here
             pass
 
         self._field.setRobotPose(self.get_pose())
@@ -91,6 +106,19 @@ class DrivetrainSubsystem(Subsystem):
             SmartDashboard.putNumber('BR Encoder', self._modules[SwerveConstants.BR].get_position().distance)
 
     def drive(self, x_speed: meters_per_second, y_speed: meters_per_second, rot_speed: radians_per_second, open_loop: bool) -> None:
+        '''
+        Converts field-relative speeds to robot-centric speeds
+
+        Used by teleop control
+
+        Parameters:
+            x_speed (meters_per_second): The desired speed in the x direction (forward)
+            y_speed (meters_per_second): The desired speed in the y direction (sideways)
+            rot_speed (radians_per_second): The desired rotational speed
+            open_loop (bool):
+                - **True**: treat speed as a percent power from -1.0 to 1.0
+                - **False**: treat speed as a velocity in meters per second
+        '''
         speeds: ChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             x_speed,
             y_speed,
@@ -100,10 +128,33 @@ class DrivetrainSubsystem(Subsystem):
         self.drive_robotcentric(speeds, open_loop)
 
     def drive_robotcentric(self, speeds: ChassisSpeeds, open_loop: bool) -> None:
+        '''
+        Converts robot-centric speeds to module states and commands the modules to drive
+
+        Used by the autonomous drive controller
+
+        Parameters:
+            speeds (ChassisSpeeds): The desired chassis speeds
+            open_loop (bool):
+                - **True**: treat speed as a percent power from -1.0 to 1.0
+                - **False**: treat speed as a velocity in meters per second
+        '''
         states: list[SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds)
         self.set_module_states(states, open_loop, optimize=True)
 
     def dynamic_pivot_drive(self, x_speed: meters_per_second, y_speed: meters_per_second, rot_speed: radians_per_second, center_of_rotation: Translation2d, open_loop: bool) -> None:
+        '''
+        Converts field-centric speeds to robot-centric speeds with a specified center of rotation
+
+        Parameters:
+            x_speed (meters_per_second): The desired speed in the x direction (forward)
+            y_speed (meters_per_second): The desired speed in the y direction (sideways)
+            rot_speed (radians_per_second): The desired rotational speed
+            center_of_rotation (Translation2d): The point around which the robot should rotate
+            open_loop (bool): 
+                - **True**: treat speed as a percent power from -1.0 to 1.0
+                - **False**: treat speed as a velocity in meters per second
+        '''
         speeds: ChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             x_speed,
             y_speed,
@@ -113,27 +164,71 @@ class DrivetrainSubsystem(Subsystem):
         self.dynamic_pivot_drive_robotcentric(speeds, center_of_rotation, open_loop)
 
     def dynamic_pivot_drive_robotcentric(self, speeds: ChassisSpeeds, center_of_rotation: Translation2d, open_loop: bool) -> None:
+        '''
+        Drives the robot with a specified center of rotation
+
+        Parameters:
+            speeds (ChassisSpeeds): The desired chassis speeds
+            center_of_rotation (Translation2d): The point around which the robot should rotate
+            open_loop (bool): 
+                - **True**: treat speed as a percent power from -1.0 to 1.0
+                - **False**: treat speed as a velocity in meters per second
+        '''
         states: list[SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds, center_of_rotation)
         self.set_module_states(states, open_loop, optimize=True)
 
     def set_module_states(self, desired_states: list[SwerveModuleState], open_loop: bool, optimize: bool) -> None:
-        states = self._kinematics.desaturateWheelSpeeds(desired_states, SwerveConstants.MAX_WHEEL_SPEED)
+        '''
+        Sets the desired states (wheel speeds and steer angles) for all drivetrain modules
+        Parameters:
+            desired_states (list[SwerveModuleState]): The desired states for all modules
+            open_loop (bool): 
+                - **True**: treat speed as a percent power from -1.0 to 1.0
+                - **False**: treat speed as a velocity in meters per second
+            optimize (bool): Whether to optimize the steering angles to minimize rotation
+        '''
+        if open_loop:
+            states = self._kinematics.desaturateWheelSpeeds(desired_states, 1.0)
+        else:
+            states = self._kinematics.desaturateWheelSpeeds(desired_states, SwerveConstants.MAX_WHEEL_SPEED)
+        
         for module, state in zip(self._modules, states):
             module.set_desired_state(state, open_loop, optimize)
 
     def get_heading(self) -> Rotation2d:
+        '''
+        Gets the current heading of the robot
+
+        0 degrees is towards the red alliance wall, increasing clockwise
+        '''
         return self._pigeon.getRotation2d().rotateBy(self._pigeon_offset)
 
     def set_heading(self, heading: Rotation2d) -> None:
+        '''
+        Sets the current heading of the robot to a specified value without changing its position
+        Parameters:
+            heading (Rotation2d): The new heading of the robot
+        '''
         self.reset_odometry(Pose2d(self._odometry.getEstimatedPosition().translation(), heading))
 
     def get_turn_rate(self) -> radians_per_second:
+        '''
+        Gets the current turn rate of the robot
+        '''
         return degreesToRadians(-self._pigeon.get_angular_velocity_z_world().value)
 
     def get_pose(self) -> Pose2d:
+        '''
+        Gets the current estimated location of the robot on the field
+        '''
         return self._odometry.getEstimatedPosition()
 
     def reset_odometry(self, pose: Pose2d) -> None:
+        '''
+        Resets the drivetrain odometry to a specified pose
+        Parameters:
+            pose (Pose2d): The new pose of the robot
+        '''
         self._pigeon_offset = pose.rotation() - self._pigeon.getRotation2d()
         self._odometry.resetPosition(
             self.get_heading(),
@@ -142,27 +237,53 @@ class DrivetrainSubsystem(Subsystem):
         )
 
     def get_module_positions(self) -> list[SwerveModule]:
+        '''
+        Gets the current positions of all drivetrain modules
+        '''
         return [module.get_position() for module in self._modules]
 
     def get_chassis_speeds(self) -> ChassisSpeeds:
+        '''
+        Gets the current chassis speeds of the drivetrain
+        '''
         return self._kinematics.toChassisSpeeds(
             [module.get_state() for module in self._modules]
         )
 
     def stop_motors(self) -> None:
+        '''
+        Stops all drivetrain motors (drive and steer)
+        '''
         for module in self._modules:
             module.stop_motors()
 
     def reset_encoders(self) -> None:
+        '''
+        Resets all drivetrain module encoder positions to 0
+        '''
         for module in self._modules:
             module.reset_encoder()
 
     def set_coast_mode(self) -> None:
+        '''
+        Sets all drivetrain motors to coast mode
+        '''
         for module in self._modules:
             module.set_coast_mode()
     def set_brake_mode(self) -> None:
+        '''
+        Sets all drivetrain motors to brake mode
+        '''
         for module in self._modules:
             module.set_brake_mode()
 
     def set_target_position(self, pose: Pose2d) -> None:
+        '''
+        Sets the target position for visualization on SmartDashboard
+
+        This is purely for visualization and does not affect robot behavior
+
+        Parameters:
+            pose (Pose2d): Where to show the target position on the field
+        '''
         self._target_position = pose
