@@ -2,7 +2,7 @@ import commands2
 import pathplannerlib
 from wpilib.geometry import Pose2d
 
-from subsystems.DrivetrainSubsystem import DrivetrainSubsystem
+from subsystems.drivetrain_subsystem import DrivetrainSubsystem
 import PathfindingConstants
 
 class FinalAlignmentCommand(commands2.Command):
