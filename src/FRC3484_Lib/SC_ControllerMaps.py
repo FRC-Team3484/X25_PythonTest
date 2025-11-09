@@ -13,7 +13,7 @@ This makes it hard to change button mappings later, as a change to the mapping s
 
 To solve this, we implement a multi-step solution:
 1. Create an InputType enum that encodes the type of input (button, axis, trigger, POV, etc).
-2. Create a universal Input class that combines the type of input and its index on the controller.  This replaces the original controller maps that only specified button/axis indices.
+2. Create a universal Input class that combines the type of input and its index on the controller.  This replaces the original controller maps that only specified indices.
 3. Create a GenericController class that wraps a GenericHID and provides methods to get inputs as buttons or axes, regardless of their original type.
 
 Button mapping in constants can now use the Input class to specify any input type for any action, 
@@ -48,12 +48,13 @@ class Input:
 
 class GenericController(Subsystem):
     '''
-    Generic controller class for handling various types of inputs.
-    Supports buttons, axes, triggers, and POV hats.
-    Uses GenericHID as the base controller interface.
-    Allows for any input to be treated as any other type of input.
-    Safeguards against errors during competition.
+    Controller class that wraps a GenericHID and provides the following features:
+    - Implicit conversion from any input type to any other input type (such as using a trigger as a button)
+    - Deadband application for axes
+    - Edge detection for all input types
+    - Error handling that doesn't halt execution or spam warnings during competition
     '''
+    ERROR_TIMEOUT: int = 100 # Number of periodic cycles to wait between error messages during competition
     def __init__(self, port: int, axis_limit: float = 0.5, trigger_limit: float = 0.5, axis_deadband: float = 0.02) -> None:
         super().__init__()
         self._controller: GenericHID = GenericHID(port)
@@ -87,6 +88,21 @@ class GenericController(Subsystem):
         self.set_left_rumble(rumble)
         self.set_right_rumble(rumble)
 
+    def _throw_error(self, message:str, error:Exception) -> None:
+        '''
+        Throw an error if an issue occurs while getting an input.
+        Only halt execution if not in competition.
+        '''
+        if DriverStation.isFMSAttached():
+            # Don't spam errors
+            if self._last_error == 0:
+                print(message)
+                print(error)
+                self._last_error = self.ERROR_TIMEOUT
+        else:
+            print(message)
+            raise error
+
     def _apply_deadband(self, value: float) -> float:
         '''
         Apply deadband to an axis value.
@@ -114,20 +130,23 @@ class GenericController(Subsystem):
         for i in range(1, self._controller.getButtonCount() + 1):
             try:
                 inputs["buttons"][i] = self._controller.getRawButton(i)
-            except:
+            except Exception as e:
                 inputs["buttons"][i] = False
+                self._throw_error(f"Failed to get button {i} state for controller {self._controller.getPort()}", e)
 
         for i in range(self._controller.getAxisCount()):
             try:
                 inputs["axes"][i] = self._controller.getRawAxis(i)
             except:
                 inputs["axes"][i] = 0.0
+                self._throw_error(f"Failed to get axis {i} state for controller {self._controller.getPort()}", e)
         
         for i in range(self._controller.getPOVCount()):
             try:
                 inputs["povs"][i] = self._controller.getPOV(i)
             except:
                 inputs["povs"][i] = -1
+                self._throw_error(f"Failed to get POV {i} state for controller {self._controller.getPort()}", e)
 
         return inputs
     
@@ -174,17 +193,9 @@ class GenericController(Subsystem):
                 case InputType.POV_Y:
                     # True if POV is in any up/down position
                     return input_states["povs"][input.index] in (315, 0, 45, 135, 180, 225)
-        except:
-            # Don't throw errors during competition
-            if DriverStation.isFMSAttached():
-                # Don't spam errors
-                if self._last_error == 0:
-                    print(f"Failed to get button for input {input} of controller {self._controller.getPort()}")
-                    self._last_error = 100 # Limit error messages to once every 100 cycles
-                return False
-            else:
-                print(f"Failed to get button for input {input} of controller {self._controller.getPort()}")
-                raise
+        except Exception as e:
+            self._throw_error(f"Failed to get button for input {input} of controller {self._controller.getPort()}", e)
+        return False
     def get_button_pressed(self, input: Input) -> bool:
         '''
         Get whether an input was pressed this cycle.
@@ -244,17 +255,9 @@ class GenericController(Subsystem):
                         return -1.0
                     elif pov in (135, 180, 225):
                         return 1.0
-        except:
-            # Don't throw errors during competition
-            if DriverStation.isFMSAttached():
-                # Don't spam errors
-                if self._last_error == 0:
-                    print(f"Failed to get axis for input {input} of controller {self._controller.getPort()}")
-                    self._last_error = 100 # Limit error messages to once every 100 cycles
-                return 0.0
-            else:
-                print(f"Failed to get axis for input {input} of controller {self._controller.getPort()}")
-                raise
+        except Exception as e:
+            self._throw_error(f"Failed to get axis for input {input} of controller {self._controller.getPort()}", e)
+        return 0.0
     def get_axis_change(self, input: Input) -> float:
         '''
         Get the change in value of an input since last cycle.
@@ -318,17 +321,9 @@ class GenericController(Subsystem):
                         return 90.0
                     else:
                         return -1.0
-        except:
-            # Don't throw errors during competition
-            if DriverStation.isFMSAttached():
-                # Don't spam errors
-                if self._last_error == 0:
-                    print(f"Failed to get angle for input {input} of controller {self._controller.getPort()}")
-                    self._last_error = 100 # Limit error messages to once every 100 cycles
-                return -1.0
-            else:
-                print(f"Failed to get angle for input {input} of controller {self._controller.getPort()}")
-                raise
+        except Exception as e:
+            self._throw_error(f"Failed to get angle for input {input} of controller {self._controller.getPort()}", e)
+        return -1.0
 
 @dataclass(frozen=True)
 class XboxControllerMap:
