@@ -118,7 +118,7 @@ class GenericController(Subsystem):
 
     def _get_all(self) -> dict[str, dict[int, bool|int|float]]:
         '''
-        Get all inputs from a controller as a dictionary.
+        Get all raw inputs from a controller as a dictionary.
         Used for tracking when an input changes state.
         '''
         inputs: dict[str, dict[int, bool|int|float]] = {
@@ -238,7 +238,10 @@ class GenericController(Subsystem):
                     return 1.0 if input.index[1] == input_states["povs"][input.index[0]] else 0.0
                 case InputType.POV_ANGLE:
                     # Direction of POV in rotations
-                    return input_states["povs"][input.index] / 360.0
+                    pov = input_states["povs"][input.index]
+                    if pov == -1:
+                        return 0.0
+                    return pov / 360.0
                 case InputType.POV_X:
                     # X component of POV as -1.0, 0.0, or 1.0 (positive right)
                     pov = input_states["povs"][input.index]
@@ -324,6 +327,11 @@ class GenericController(Subsystem):
         except Exception as e:
             self._throw_error(f"Failed to get angle for input {input} of controller {self._controller.getPort()}", e)
         return -1.0
+    def get_angle_change(self, input: Input) -> float:
+        '''
+        Get the change in angle of an input since last cycle.
+        '''
+        return self.get_angle(input, self._current_inputs) - self.get_angle(input, self._previous_inputs)
 
 @dataclass(frozen=True)
 class XboxControllerMap:
