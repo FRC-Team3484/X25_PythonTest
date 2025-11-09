@@ -70,6 +70,23 @@ class GenericController(Subsystem):
         if self._last_error > 0:
             self._last_error -= 1
 
+    def set_left_rumble(self, rumble: float) -> None:
+        '''
+        Set the left rumble intensity of the controller.
+        '''
+        self._controller.setRumble(GenericHID.RumbleType.kLeftRumble, rumble)
+    def set_right_rumble(self, rumble: float) -> None:
+        '''
+        Set the right rumble intensity of the controller.
+        '''
+        self._controller.setRumble(GenericHID.RumbleType.kRightRumble, rumble)
+    def set_rumble(self, rumble: float) -> None:
+        '''
+        Set the rumble intensity of the controller.
+        '''
+        self.set_left_rumble(rumble)
+        self.set_right_rumble(rumble)
+
     def _apply_deadband(self, value: float) -> float:
         '''
         Apply deadband to an axis value.

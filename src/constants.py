@@ -63,7 +63,6 @@ class SwerveConstants:
     
 @dataclass(frozen=True)
 class UserInterface:
-
     class Driver:
         CONTROLLER_PORT: int = 0
         JOYSTICK_DEADBAND: float = 0.02
