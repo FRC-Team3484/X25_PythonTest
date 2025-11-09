@@ -83,3 +83,8 @@ class UserInterface:
         TOGGLE_COAST_BUTTON: Input = ControllerMap.START_BUTTON
         LOW_SPEED_MODE_BUTTON: Input = ControllerMap.RIGHT_TRIGGER
         DYNAMIC_PIVOT_BUTTON: Input = ControllerMap.RIGHT_BUMPER
+
+        JOG_UP_BUTTON: Input = ControllerMap.DPAD_UP
+        JOG_DOWN_BUTTON: Input = ControllerMap.DPAD_DOWN
+        JOG_LEFT_BUTTON: Input = ControllerMap.DPAD_LEFT
+        JOG_RIGHT_BUTTON: Input = ControllerMap.DPAD_RIGHT

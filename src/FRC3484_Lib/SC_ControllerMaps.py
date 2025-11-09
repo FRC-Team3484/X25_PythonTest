@@ -45,6 +45,119 @@ class Input:
     
     def __str__(self):
         return f"{self.type.name}({self.index})"
+    
+@dataclass(frozen=True)
+class XboxControllerMap:
+
+    LEFT_JOY_X: Input = Input(InputType.AXIS, 0) # -1.0 (left) to 1.0 (right)
+    LEFT_JOY_Y: Input = Input(InputType.AXIS, 1) # -1.0 (forward) to 1.0 (backward)
+    LEFT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1)) # Degrees: 0-360 or -1 for neutral
+    LEFT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1)) # Magnitude of left joystick movement: 0.0 to 1.0
+
+    LEFT_TRIGGER: Input = Input(InputType.TRIGGER, 2) # 0.0 to 1.0
+    RIGHT_TRIGGER: Input = Input(InputType.TRIGGER, 3) # 0.0 to 1.0
+
+    RIGHT_JOY_X: Input = Input(InputType.AXIS, 4) # -1.0 (left) to 1.0 (right)
+    RIGHT_JOY_Y: Input = Input(InputType.AXIS, 5) # -1.0 (forward) to 1.0 (backward)
+    RIGHT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (4, 5)) # Degrees: 0-360 or -1 for neutral
+    RIGHT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (4, 5)) # Magnitude of right joystick movement: 0.0 to 1.0
+
+    A_BUTTON: Input = Input(InputType.BUTTON, 1) # True if pressed
+    B_BUTTON: Input = Input(InputType.BUTTON, 2) # True if pressed
+    X_BUTTON: Input = Input(InputType.BUTTON, 3) # True if pressed
+    Y_BUTTON: Input = Input(InputType.BUTTON, 4) # True if pressed
+    LEFT_BUMPER: Input = Input(InputType.BUTTON, 5) # True if pressed
+    RIGHT_BUMPER: Input = Input(InputType.BUTTON, 6) # True if pressed
+    BACK_BUTTON: Input = Input(InputType.BUTTON, 7) # True if pressed
+    START_BUTTON: Input = Input(InputType.BUTTON, 8) # True if pressed
+    LEFT_STICK_BUTTON: Input = Input(InputType.BUTTON, 9) # True if pressed
+    RIGHT_STICK_BUTTON: Input = Input(InputType.BUTTON, 10) # True if pressed
+
+    DPAD_NONE: Input = Input(InputType.POV, (0, -1)) # True if neutral
+    DPAD_UP: Input = Input(InputType.POV, (0, 0)) # True if pressed up
+    DPAD_RIGHT: Input = Input(InputType.POV, (0, 90)) # True if pressed right
+    DPAD_DOWN: Input = Input(InputType.POV, (0, 180)) # True if pressed down
+    DPAD_LEFT: Input = Input(InputType.POV, (0, 270)) # True if pressed left
+    DPAD_UP_RIGHT: Input = Input(InputType.POV, (0, 45)) # True if pressed up-right
+    DPAD_DOWN_RIGHT: Input = Input(InputType.POV, (0, 135)) # True if pressed down-right
+    DPAD_DOWN_LEFT: Input = Input(InputType.POV, (0, 225)) # True if pressed down-left
+    DPAD_UP_LEFT: Input = Input(InputType.POV, (0, 315)) # True if pressed up-left
+
+    DPAD_X: Input = Input(InputType.POV_X, 0) # -1/0/1 for left/neutral/right
+    DPAD_Y: Input = Input(InputType.POV_Y, 0) # -1/0/1 for up/neutral/down
+    DPAD_ANGLE: Input = Input(InputType.POV_ANGLE, 0) # Degrees: 0-360 or -1 for neutral
+
+@dataclass(frozen=True)
+class DualShock4Map:
+
+    LEFT_JOY_X: Input = Input(InputType.AXIS, 0) # -1.0 (left) to 1.0 (right)
+    LEFT_JOY_Y: Input = Input(InputType.AXIS, 1) # -1.0 (forward) to 1.0 (backward)
+    LEFT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1)) # Degrees: 0-360 or -1 for neutral
+    LEFT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1)) # Magnitude of left joystick movement: 0.0 to 1.0
+
+    RIGHT_JOY_X: Input = Input(InputType.AXIS, 2) # -1.0 (left) to 1.0 (right)
+    RIGHT_JOY_Y: Input = Input(InputType.AXIS, 5) # -1.0 (forward) to 1.0 (backward)
+    RIGHT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (2, 5)) # Degrees: 0-360 or -1 for neutral
+    RIGHT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (2, 5)) # Magnitude of right joystick movement: 0.0 to 1.0
+
+    L2_TRIGGER: Input = Input(InputType.TRIGGER, 3) # 0.0 to 1.0
+    R2_TRIGGER: Input = Input(InputType.TRIGGER, 4) # 0.0 to 1.0
+
+    SQUARE: Input = Input(InputType.BUTTON, 1) # True if pressed
+    CROSS: Input = Input(InputType.BUTTON, 2) # True if pressed
+    CIRCLE: Input = Input(InputType.BUTTON, 3) # True if pressed
+    TRIANGLE: Input = Input(InputType.BUTTON, 4) # True if pressed
+    L1: Input = Input(InputType.BUTTON, 5) # True if pressed
+    R1: Input = Input(InputType.BUTTON, 6) # True if pressed
+    L2_BUTTON: Input = Input(InputType.BUTTON, 7) # True if pressed
+    R2_BUTTON: Input = Input(InputType.BUTTON, 8) # True if pressed
+    SHARE_BUTTON: Input = Input(InputType.BUTTON, 9) # True if pressed
+    OPTIONS_BUTTON: Input = Input(InputType.BUTTON, 10) # True if pressed
+    LEFT_STICK_BUTTON: Input = Input(InputType.BUTTON, 11) # True if pressed
+    RIGHT_STICK_BUTTON: Input = Input(InputType.BUTTON, 12) # True if pressed
+    PS_BUTTON: Input = Input(InputType.BUTTON, 13) # True if pressed
+    TOUCHPAD_BUTTON: Input = Input(InputType.BUTTON, 14) # True if pressed
+
+    DPAD_NONE: Input = Input(InputType.POV, (0, -1)) # True if neutral
+    DPAD_UP: Input = Input(InputType.POV, (0, 0))  # True if pressed up
+    DPAD_RIGHT: Input = Input(InputType.POV, (0, 90)) # True if pressed right
+    DPAD_DOWN: Input = Input(InputType.POV, (0, 180)) # True if pressed down
+    DPAD_LEFT: Input = Input(InputType.POV, (0, 270)) # True if pressed left
+    DPAD_UP_RIGHT: Input = Input(InputType.POV, (0, 45)) # True if pressed up-right
+    DPAD_DOWN_RIGHT: Input = Input(InputType.POV, (0, 135)) # True if pressed down-right
+    DPAD_DOWN_LEFT: Input = Input(InputType.POV, (0, 225)) # True if pressed down-left
+    DPAD_UP_LEFT: Input = Input(InputType.POV, (0, 315)) # True if pressed up-left
+
+    DPAD_X: Input = Input(InputType.POV_X, 0) # -1/0/1 for left/neutral/right
+    DPAD_Y: Input = Input(InputType.POV_Y, 0) # -1/0/1 for up/neutral/down
+    DPAD_ANGLE: Input = Input(InputType.POV_ANGLE, 0) # Degrees: 0-360 or -1 for neutral
+
+@dataclass(frozen=True)
+class LogitechExtreme3DMap:
+
+    X: Input = Input(InputType.AXIS, 0) # -1.0 (left) to 1.0 (right)
+    Y: Input = Input(InputType.AXIS, 1) # -1.0 (forward) to 1.0 (backward)
+    XY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1)) # Degrees: 0-360 or -1 for neutral
+    XY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1)) # Magnitude of XY movement: 0.0 to 1.0
+
+    Z_ROTATION: Input = Input(InputType.AXIS, 2) # -1.0 to 1.0
+    THROTTLE: Input = Input(InputType.AXIS, 3) # -1.0 to 1.0
+
+    TRIGGER: Input = Input(InputType.BUTTON, 1) # True if pressed
+    BUTTON_2: Input = Input(InputType.BUTTON, 2) # True if pressed
+    BUTTON_3: Input = Input(InputType.BUTTON, 3) # True if pressed
+    BUTTON_4: Input = Input(InputType.BUTTON, 4) # True if pressed
+    BUTTON_5: Input = Input(InputType.BUTTON, 5) # True if pressed
+    BUTTON_6: Input = Input(InputType.BUTTON, 6) # True if pressed
+    BUTTON_7: Input = Input(InputType.BUTTON, 7) # True if pressed
+    BUTTON_8: Input = Input(InputType.BUTTON, 8) # True if pressed
+    BUTTON_9: Input = Input(InputType.BUTTON, 9) # True if pressed
+    BUTTON_10: Input = Input(InputType.BUTTON, 10) # True if pressed
+    BUTTON_11: Input = Input(InputType.BUTTON, 11) # True if pressed
+    BUTTON_12: Input = Input(InputType.BUTTON, 12) # True if pressed
+
+    HAT_Y: Input = Input(InputType.AXIS, 4) # -1/0/1 for up/neutral/down
+    HAT_X: Input = Input(InputType.AXIS, 5) # -1/0/1 for left/neutral/right
 
 class GenericController(Subsystem):
     '''
@@ -332,116 +445,3 @@ class GenericController(Subsystem):
         Get the change in angle of an input since last cycle.
         '''
         return self.get_angle(input, self._current_inputs) - self.get_angle(input, self._previous_inputs)
-
-@dataclass(frozen=True)
-class XboxControllerMap:
-
-    LEFT_JOY_X: Input = Input(InputType.AXIS, 0)
-    LEFT_JOY_Y: Input = Input(InputType.AXIS, 1)
-    LEFT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1))
-    LEFT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1))
-
-    LEFT_TRIGGER: Input = Input(InputType.TRIGGER, 2)
-    RIGHT_TRIGGER: Input = Input(InputType.TRIGGER, 3)
-
-    RIGHT_JOY_X: Input = Input(InputType.AXIS, 4)
-    RIGHT_JOY_Y: Input = Input(InputType.AXIS, 5)
-    RIGHT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (4, 5))
-    RIGHT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (4, 5))
-
-    A_BUTTON: Input = Input(InputType.BUTTON, 1)
-    B_BUTTON: Input = Input(InputType.BUTTON, 2)
-    X_BUTTON: Input = Input(InputType.BUTTON, 3)
-    Y_BUTTON: Input = Input(InputType.BUTTON, 4)
-    LEFT_BUMPER: Input = Input(InputType.BUTTON, 5)
-    RIGHT_BUMPER: Input = Input(InputType.BUTTON, 6)
-    BACK_BUTTON: Input = Input(InputType.BUTTON, 7)
-    START_BUTTON: Input = Input(InputType.BUTTON, 8)
-    LEFT_STICK_BUTTON: Input = Input(InputType.BUTTON, 9)
-    RIGHT_STICK_BUTTON: Input = Input(InputType.BUTTON, 10)
-
-    POV_NONE: Input = Input(InputType.POV, (0, -1))
-    POV_UP: Input = Input(InputType.POV, (0, 0))
-    POV_RIGHT: Input = Input(InputType.POV, (0, 90))
-    POV_DOWN: Input = Input(InputType.POV, (0, 180))
-    POV_LEFT: Input = Input(InputType.POV, (0, 270))
-    POV_UP_RIGHT: Input = Input(InputType.POV, (0, 45))
-    POV_DOWN_RIGHT: Input = Input(InputType.POV, (0, 135))
-    POV_DOWN_LEFT: Input = Input(InputType.POV, (0, 225))
-    POV_UP_LEFT: Input = Input(InputType.POV, (0, 315))
-
-    POV_X: Input = Input(InputType.POV_X, 0)
-    POV_Y: Input = Input(InputType.POV_Y, 0)
-    POV_ANGLE: Input = Input(InputType.POV_ANGLE, 0)
-
-@dataclass(frozen=True)
-class DualShock4Map:
-
-    LEFT_JOY_X: Input = Input(InputType.AXIS, 0)
-    LEFT_JOY_Y: Input = Input(InputType.AXIS, 1)
-    LEFT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1))
-    LEFT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1))
-
-    RIGHT_JOY_X: Input = Input(InputType.AXIS, 2)
-    RIGHT_JOY_Y: Input = Input(InputType.AXIS, 5)
-    RIGHT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (2, 5))
-    RIGHT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (2, 5))
-
-    L2_TRIGGER: Input = Input(InputType.TRIGGER, 3)
-    R2_TRIGGER: Input = Input(InputType.TRIGGER, 4)
-
-    SQUARE: Input = Input(InputType.BUTTON, 1)
-    CROSS: Input = Input(InputType.BUTTON, 2)
-    CIRCLE: Input = Input(InputType.BUTTON, 3)
-    TRIANGLE: Input = Input(InputType.BUTTON, 4)
-    L1: Input = Input(InputType.BUTTON, 5)
-    R1: Input = Input(InputType.BUTTON, 6)
-    L2_BUTTON: Input = Input(InputType.BUTTON, 7)
-    R2_BUTTON: Input = Input(InputType.BUTTON, 8)
-    SHARE_BUTTON: Input = Input(InputType.BUTTON, 9)
-    OPTIONS_BUTTON: Input = Input(InputType.BUTTON, 10)
-    LEFT_STICK_BUTTON: Input = Input(InputType.BUTTON, 11)
-    RIGHT_STICK_BUTTON: Input = Input(InputType.BUTTON, 12)
-    PS_BUTTON: Input = Input(InputType.BUTTON, 13)
-    TOUCHPAD_BUTTON: Input = Input(InputType.BUTTON, 14)
-
-    POV_NONE: Input = Input(InputType.POV, (0, -1))
-    POV_UP: Input = Input(InputType.POV, (0, 0))
-    POV_RIGHT: Input = Input(InputType.POV, (0, 90))
-    POV_DOWN: Input = Input(InputType.POV, (0, 180))
-    POV_LEFT: Input = Input(InputType.POV, (0, 270))
-    POV_UP_RIGHT: Input = Input(InputType.POV, (0, 45))
-    POV_DOWN_RIGHT: Input = Input(InputType.POV, (0, 135))
-    POV_DOWN_LEFT: Input = Input(InputType.POV, (0, 225))
-    POV_UP_LEFT: Input = Input(InputType.POV, (0, 315))
-
-    POV_X: Input = Input(InputType.POV_X, 0)
-    POV_Y: Input = Input(InputType.POV_Y, 0)
-    POV_ANGLE: Input = Input(InputType.POV_ANGLE, 0)
-
-@dataclass(frozen=True)
-class LogitechExtreme3DMap:
-
-    X: Input = Input(InputType.AXIS, 0)
-    Y: Input = Input(InputType.AXIS, 1)
-    XY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1))
-    XY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1))
-
-    Z_ROTATION: Input = Input(InputType.AXIS, 2)
-    THROTTLE: Input = Input(InputType.AXIS, 3)
-
-    TRIGGER: Input = Input(InputType.BUTTON, 1)
-    BUTTON_2: Input = Input(InputType.BUTTON, 2)
-    BUTTON_3: Input = Input(InputType.BUTTON, 3)
-    BUTTON_4: Input = Input(InputType.BUTTON, 4)
-    BUTTON_5: Input = Input(InputType.BUTTON, 5)
-    BUTTON_6: Input = Input(InputType.BUTTON, 6)
-    BUTTON_7: Input = Input(InputType.BUTTON, 7)
-    BUTTON_8: Input = Input(InputType.BUTTON, 8)
-    BUTTON_9: Input = Input(InputType.BUTTON, 9)
-    BUTTON_10: Input = Input(InputType.BUTTON, 10)
-    BUTTON_11: Input = Input(InputType.BUTTON, 11)
-    BUTTON_12: Input = Input(InputType.BUTTON, 12)
-
-    HAT_Y: Input = Input(InputType.AXIS, 4) # Reads -1/0/1 for top/bottom
-    HAT_X: Input = Input(InputType.AXIS, 5) # Reads -1/0/1 for left/right
