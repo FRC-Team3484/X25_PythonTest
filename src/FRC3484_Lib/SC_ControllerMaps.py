@@ -338,7 +338,7 @@ class XboxControllerMap:
 
     LEFT_JOY_X: Input = Input(InputType.AXIS, 0)
     LEFT_JOY_Y: Input = Input(InputType.AXIS, 1)
-    LEFT_JOY_DIRECTION: Input = Input(InputType.AXIS_ANGLE, (0, 1))
+    LEFT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1))
     LEFT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1))
 
     LEFT_TRIGGER: Input = Input(InputType.TRIGGER, 2)
@@ -346,7 +346,7 @@ class XboxControllerMap:
 
     RIGHT_JOY_X: Input = Input(InputType.AXIS, 4)
     RIGHT_JOY_Y: Input = Input(InputType.AXIS, 5)
-    RIGHT_JOY_DIRECTION: Input = Input(InputType.AXIS_ANGLE, (4, 5))
+    RIGHT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (4, 5))
     RIGHT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (4, 5))
 
     A_BUTTON: Input = Input(InputType.BUTTON, 1)
@@ -379,12 +379,12 @@ class DualShock4Map:
 
     LEFT_JOY_X: Input = Input(InputType.AXIS, 0)
     LEFT_JOY_Y: Input = Input(InputType.AXIS, 1)
-    LEFT_JOY_DIRECTION: Input = Input(InputType.AXIS_DIRECTION, (0, 1))
+    LEFT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1))
     LEFT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1))
 
     RIGHT_JOY_X: Input = Input(InputType.AXIS, 2)
     RIGHT_JOY_Y: Input = Input(InputType.AXIS, 5)
-    RIGHT_JOY_DIRECTION: Input = Input(InputType.AXIS_DIRECTION, (2, 5))
+    RIGHT_JOY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (2, 5))
     RIGHT_JOY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (2, 5))
 
     L2_TRIGGER: Input = Input(InputType.TRIGGER, 3)
@@ -405,15 +405,15 @@ class DualShock4Map:
     PS_BUTTON: Input = Input(InputType.BUTTON, 13)
     TOUCHPAD_BUTTON: Input = Input(InputType.BUTTON, 14)
 
-    POV_NONE: Input = Input(InputType.POV, -1)
-    POV_UP: Input = Input(InputType.POV, 0)
-    POV_RIGHT: Input = Input(InputType.POV, 90)
-    POV_DOWN: Input = Input(InputType.POV, 180)
-    POV_LEFT: Input = Input(InputType.POV, 270)
-    POV_UP_RIGHT: Input = Input(InputType.POV, 45)
-    POV_DOWN_RIGHT: Input = Input(InputType.POV, 135)
-    POV_DOWN_LEFT: Input = Input(InputType.POV, 225)
-    POV_UP_LEFT: Input = Input(InputType.POV, 315)
+    POV_NONE: Input = Input(InputType.POV, (0, -1))
+    POV_UP: Input = Input(InputType.POV, (0, 0))
+    POV_RIGHT: Input = Input(InputType.POV, (0, 90))
+    POV_DOWN: Input = Input(InputType.POV, (0, 180))
+    POV_LEFT: Input = Input(InputType.POV, (0, 270))
+    POV_UP_RIGHT: Input = Input(InputType.POV, (0, 45))
+    POV_DOWN_RIGHT: Input = Input(InputType.POV, (0, 135))
+    POV_DOWN_LEFT: Input = Input(InputType.POV, (0, 225))
+    POV_UP_LEFT: Input = Input(InputType.POV, (0, 315))
 
     POV_X: Input = Input(InputType.POV_X, 0)
     POV_Y: Input = Input(InputType.POV_Y, 0)
@@ -424,7 +424,7 @@ class LogitechExtreme3DMap:
 
     X: Input = Input(InputType.AXIS, 0)
     Y: Input = Input(InputType.AXIS, 1)
-    XY_DIRECTION: Input = Input(InputType.AXIS_DIRECTION, (0, 1))
+    XY_ANGLE: Input = Input(InputType.AXIS_ANGLE, (0, 1))
     XY_MAGNITUDE: Input = Input(InputType.AXIS_MAGNITUDE, (0, 1))
 
     Z_ROTATION: Input = Input(InputType.AXIS, 2)
