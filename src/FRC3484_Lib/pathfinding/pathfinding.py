@@ -147,3 +147,28 @@ class SC_Pathfinding:
                 .andThen(self.get_final_alignment_command(target))
         else:
             return pathfinding_command
+
+    def go_to_nearest_pose(self, poses: list[Pose2d], distance: inches = 0.0, defer: bool = False) -> commands2.Command:
+        """
+        Returns a command that creates a path to first find the nearest pose from
+            the given list of poses, then generates a command to drive to that pose
+
+        If a distance is provided, it will use a FinalAlignmentCommand to align to the target
+            once the robot is within that distance
+
+        Parameters:
+            - poses (list[Pose2d]): The list of poses to find the nearest pose from
+            - distance (inches): The distance to wait before exiting
+            - defer (bool): Whether to defer the command
+
+        Returns:
+            - Command: The command to drive to the target
+        """
+
+        if defer:
+            return commands2.DeferredCommand(
+                lambda poses=poses: self.get_pathfind_command(self.get_nearest_pose(poses), distance, defer), 
+                self._drivetrain_subsystem
+            )
+        else:
+            return self.get_pathfind_command(self.get_nearest_pose(poses), distance, defer)
