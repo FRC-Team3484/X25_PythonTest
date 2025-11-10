@@ -1,5 +1,8 @@
+from dataclasses import dataclass
+
 from wpimath.units import inches, degrees, meters_per_second, meters_per_second_squared, degrees_per_second, degrees_per_second_squared
 
+@dataclass(frozen=True)
 class PathfindingConstants:
     # PathfindingCommand
     MAX_VELOCITY: meters_per_second = 3.0

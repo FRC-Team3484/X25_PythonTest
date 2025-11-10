@@ -1,16 +1,15 @@
-from subsystems.drivetrain_subsystem import DrivetrainSubsystem
+from typing import Callable
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
-from wpimath.geometry import Pose2d
+from wpimath.geometry import Pose2d, Pose3d
 import commands2
 from wpimath.units import inches
 
-import pathplannerlib
+from pathplannerlib.path import PathConstraints
+from pathplannerlib.auto import AutoBuilder
 
-import PathfindingConstants
-import FinalAlignmentCommand
-
-aprilTagField: AprilTagField = AprilTagField.k2025ReefscapeWelded
-aprilTagFieldLayout: AprilTagFieldLayout = AprilTagFieldLayout(aprilTagField)
+from ..subsystems.drivetrain_subsystem import DrivetrainSubsystem
+from ..FRC3484_Lib.PathfindingConstants import PathfindingConstants
+from ..FRC3484_Lib.FinalAlignmentCommand import FinalAlignmentCommand
 
 class SC_Pathfinding:
     """
@@ -23,12 +22,12 @@ class SC_Pathfinding:
         poseSupplier (DrivetrainSubsystem.poseSupplier): The pose supplier
         aprilTagFieldLayout (AprilTagFieldLayout): The april tag field layout
     """
-    def __init__(self, drivetrainSubsystem: DrivetrainSubsystem, poseSupplier: DrivetrainSubsystem.poseSupplier, aprilTagFieldLayout: aprilTagFieldLayout):
-        self.drivetrainSubsystem = drivetrainSubsystem
-        self.poseSupplier = poseSupplier
-        self.aprilTagFieldLayout = aprilTagField
+    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field_layout: AprilTagFieldLayout):
+        self._drivetrain_subsystem = drivetrain_subsystem
+        self._pose_supplier = pose_supplier
+        self._april_tag_field_layout = april_tag_field_layout
 
-    def getAprilTagPoses(self, aprilTagIds: list[int]) -> list[Pose2d]:
+    def get_april_tag_poses(self, april_tag_ids: list[int]) -> list[Pose2d]:
         """
         Returns the poses of april tags by id
 
@@ -40,12 +39,14 @@ class SC_Pathfinding:
         """
         poses: list[Pose2d] = []
 
-        for id in aprilTagIds:
-            poses.append(self.aprilTagFieldLayout.getTagPose(id))
+        for id in april_tag_ids:
+            pose: Pose3d | None = self._april_tag_field_layout.getTagPose(id)
+            if pose is not None:
+                poses.append(pose.toPose2d())
         
         return poses
 
-    def applyOffsetToPose(self, pose: Pose2d, offset: Pose2d) -> Pose2d:
+    def apply_offset_to_pose(self, pose: Pose2d, offset: Pose2d) -> Pose2d:
         """
         Applies an offset to a pose
 
@@ -58,7 +59,7 @@ class SC_Pathfinding:
         """
         return Pose2d(pose.translation() + offset.translation().rotateBy(pose.rotation()), pose.rotation() + offset.rotation())
     
-    def applyOffsetsToPoses(self, poses: list[Pose2d], offsets: list[Pose2d]) -> list[Pose2d]:
+    def apply_offsets_to_poses(self, poses: list[Pose2d], offsets: list[Pose2d]) -> list[Pose2d]:
         """
         Applies a list of offsets to a list of poses
         Will return the number of offsets equal to poses times offsets
@@ -71,9 +72,9 @@ class SC_Pathfinding:
         Returns:
             list[Pose2d]: The resulting poses
         """
-        return [self.applyOffsetToPose(pose, offset) for pose in poses for offset in offsets]
+        return [self.apply_offset_to_pose(pose, offset) for pose in poses for offset in offsets]
 
-    def getNearestPose(self, poses: list[Pose2d]) -> Pose2d:
+    def get_nearest_pose(self, poses: list[Pose2d]) -> Pose2d:
         """
         Returns the nearest pose to the robot's current position
 
@@ -83,9 +84,9 @@ class SC_Pathfinding:
         Returns:
             Pose2d: The nearest pose
         """
-        return self.poseSupplier().nearest(poses)
+        return self._pose_supplier().nearest(poses)
 
-    def getFinalAlignmentCommand(self, target: Pose2d, defer: bool) -> commands2.Command:
+    def get_final_alignment_command(self, target: Pose2d, defer: bool = False) -> commands2.Command:
         """
         Returns a command to align the robot to a target pose
 
@@ -96,15 +97,14 @@ class SC_Pathfinding:
         Returns:
             Command: The command to align to the target
         """
-        final_alignment_command: FinalAlignmentCommand = FinalAlignmentCommand(self.drivetrainSubsystem, target)
+        _final_alignment_command: FinalAlignmentCommand = FinalAlignmentCommand(self._drivetrain_subsystem, target)
 
-        # TODO: Check if this is the correct syntax
-        if (defer):
-            return commands2.DeferredCommand(final_alignment_command)
+        if defer:
+            return commands2.DeferredCommand(lambda target=target: _final_alignment_command, self._drivetrain_subsystem)
         else:
-            return final_alignment_command
-    
-    def getNearPoseCommand(self, target: Pose2d, distance: inches) -> commands2.Command:
+            return _final_alignment_command
+
+    def get_near_pose_command(self, target: Pose2d, distance: inches) -> commands2.Command:
         """
         Returns a command that does nothing and waits until the robot is within a distance, then exits
         Designed to be used in a ParallelCommandGroup with the GetFinalAlignmentCommand, 
@@ -117,9 +117,9 @@ class SC_Pathfinding:
         Returns:
             Command: The command to align to the target
         """
-        return commands2.WaitUntilCommand(lambda: self.drivetrainSubsystem.get_pose().Translation().Distance(target.Translation) < distance)
+        return commands2.WaitUntilCommand(lambda: self._pose_supplier().translation().Distance(target.translation()) < distance)
     
-    def getPathfindCommand(self, target: Pose2d, distance: inches, defer: bool) -> commands2.Command:
+    def get_pathfind_command(self, target: Pose2d, distance: inches, defer: bool) -> commands2.Command:
         """
         Returns a command that creates a path to drive to the target pose
         If a distance is provided, it will use a FinalAlignmentCommand to align to the target
@@ -133,19 +133,19 @@ class SC_Pathfinding:
         Returns:
             Command: The command to drive to the target
         """
-        constraints: pathplannerlib.path.PathConstraints = pathplannerlib.path.PathConstraints(
-            PathfindingConstants.MAX_SPEED, 
+        constraints: PathConstraints = PathConstraints(
+            PathfindingConstants.MAX_VELOCITY, 
             PathfindingConstants.MAX_ACCELERATION, 
-            PathfindingConstants.MAX_ANGULAR_SPEED, 
+            PathfindingConstants.MAX_ANGULAR_VELOCITY, 
             PathfindingConstants.MAX_ANGULAR_ACCELERATION
         )
 
-        pathfinding_command: commands2.Command = pathplannerlib.auto.AutoBuilder.pathfindToPose(target, constraints, 0.0)
+        pathfinding_command: commands2.Command = AutoBuilder.pathfindToPose(target, constraints, 0.0)
 
         if distance > 0:
-            return self.getNearPoseCommand(target, distance) \
+            return self.get_near_pose_command(target, distance) \
                 .raceWith(pathfinding_command) \
-                .andThen(self.getFinalAlignmentCommand(target))
+                .andThen(self.get_final_alignment_command(target))
 
         else:
             return pathfinding_command
