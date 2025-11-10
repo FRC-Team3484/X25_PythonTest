@@ -4,6 +4,8 @@ from wpimath.geometry import Translation2d
 from wpimath.units import inches, meters_per_second, feetToMeters
 
 from .FRC3484_Lib.SC_Datatypes import *
+from .FRC3484_Lib.SC_ControllerMaps import Input
+from .FRC3484_Lib.SC_ControllerMaps import XboxControllerMap as ControllerMap
 
 @dataclass(frozen=True)
 class SwerveConstants:
@@ -59,3 +61,30 @@ class SwerveConstants:
         for _ in range(len(MODULE_CONFIGS))
     ])
     
+@dataclass(frozen=True)
+class UserInterface:
+    class Driver:
+        CONTROLLER_PORT: int = 0
+        JOYSTICK_DEADBAND: float = 0.02
+
+        AXIS_LIMIT: float = 0.5 # How far an axis must move to be considered "pressed"
+        TRIGGER_LIMIT: float = 0.5 # How far a trigger must be pressed to be considered "pressed"
+
+        RUMBLE_HIGH: float = 0.5
+        RUMBLE_LOW: float = 0.2
+        RUMBLE_OFF: float = 0.0
+        
+        THROTTLE_AXIS: Input = ControllerMap.LEFT_JOY_Y
+        STRAFE_AXIS: Input = ControllerMap.LEFT_JOY_X
+        ROTATION_AXIS: Input = ControllerMap.RIGHT_JOY_X
+
+        RESET_HEADING_BUTTON: Input = ControllerMap.BACK_BUTTON
+        HOLD_MODE_BUTTON: Input = ControllerMap.LEFT_BUMPER
+        TOGGLE_COAST_BUTTON: Input = ControllerMap.START_BUTTON
+        LOW_SPEED_MODE_BUTTON: Input = ControllerMap.RIGHT_TRIGGER
+        DYNAMIC_PIVOT_BUTTON: Input = ControllerMap.RIGHT_BUMPER
+
+        JOG_UP_BUTTON: Input = ControllerMap.DPAD_UP
+        JOG_DOWN_BUTTON: Input = ControllerMap.DPAD_DOWN
+        JOG_LEFT_BUTTON: Input = ControllerMap.DPAD_LEFT
+        JOG_RIGHT_BUTTON: Input = ControllerMap.DPAD_RIGHT
