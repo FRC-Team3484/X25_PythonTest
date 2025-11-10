@@ -1,9 +1,12 @@
+from typing import override
+
 import commands2
-import pathplannerlib
-from wpilib.geometry import Pose2d
+from wpimath.geometry import Pose2d
+
+from pathplannerlib.controller import PPHolonomicDriveController, PathPlannerTrajectoryState, PIDConstants
 
 from subsystems.drivetrain_subsystem import DrivetrainSubsystem
-import PathfindingConstants
+from ..FRC3484_Lib.PathfindingConstants import PathfindingConstants
 
 class FinalAlignmentCommand(commands2.Command):
     """
@@ -11,36 +14,45 @@ class FinalAlignmentCommand(commands2.Command):
     Used by SC_Pathfinding to align the robot to the target pose,
         commonly after using pathfinding to roughly reach a pose
     
-    Args:
-        drivetrain_subsystem (DrivetrainSubsystem): The drivetrain subsystem
-        target_pose (Pose2d): The target pose
+    Parameters:
+        - drivetrain_subsystem (DrivetrainSubsystem): The drivetrain subsystem
+        - target_pose (Pose2d): The target pose
     """
-    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, target_pose: Pose2d):
+    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, target_pose: Pose2d) -> None:
         super().__init__()
-        self.drivetrain_subsystem = drivetrain_subsystem
-        self.target_pose = target_pose
+        self.drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
+        self.target_pose: Pose2d = target_pose
 
-        self.drive_controller: pathplannerlib.controller.PPHolonomicDriveController = pathplannerlib.controller.PPHolonomicDriveController(
-            pathplannerlib.controller.PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
-            pathplannerlib.controller.PIDConstants(5.0, 0.0, 0.0) # Rotation PID constants
+        self.drive_controller: PPHolonomicDriveController = PPHolonomicDriveController(
+            PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
+            PIDConstants(5.0, 0.0, 0.0) # Rotation PID constants
         )
         self.counter: int = 0
 
-    def initialize(self):
+    @override
+    def initialize(self) -> None:
         self.counter = 0
 
-    def execute(self):
+    @override
+    def execute(self) -> None:
         self.counter += 1
-        goal_state: pathplannerlib.controller.PathPlannerTrajectoryState = pathplannerlib.controller.PathPlannerTrajectoryState()
+        goal_state: PathPlannerTrajectoryState = PathPlannerTrajectoryState()
         goal_state.pose = self.target_pose
 
-        # TODO: Implement drivetrain
-        self.drivetrain_subsystem.drive_robot_centric(self.drive_controller.calculateRobotRelativeSpeeds(self.drivetrain_subsystem.get_pose(), goal_state))
+        self.drivetrain_subsystem.drive_robotcentric(
+            self.drive_controller.calculateRobotRelativeSpeeds(
+                self.drivetrain_subsystem.get_pose(), 
+                goal_state
+            ), 
+            open_loop=False
+        )
 
-    def end(self):
+    @override
+    def end(self, interrupted: bool) -> None:
         self.drivetrain_subsystem.stop_motors()
     
-    def isFinished(self):
+    @override
+    def isFinished(self) -> bool:
         return self.counter >= PathfindingConstants.FINAL_ALIGN_EXIT or \
-            (self.drivetrain_subsystem.get_pose().Translation().Distance(self.target_pose.Translation) < PathfindingConstants.FINAL_POSE_TOLERANCE and \
-            abs(self.drivetrain_subsystem.get_pose().Rotation().Degrees() - self.target_pose.Rotation.Degrees()) < PathfindingConstants.FINAL_ROTATION_TOLERANCE)
+            (self.drivetrain_subsystem.get_pose().translation().distance(self.target_pose.translation()) < PathfindingConstants.FINAL_POSE_TOLERANCE and \
+            abs(self.drivetrain_subsystem.get_pose().rotation().degrees() - self.target_pose.rotation().degrees()) < PathfindingConstants.FINAL_ROTATION_TOLERANCE)
