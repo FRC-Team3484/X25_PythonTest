@@ -129,18 +129,21 @@ class SC_Pathfinding:
             - Command: The command to drive to the target
         """
 
-        pathfinding_command: commands2.Command = AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0)
-        final_command: commands2.Command | commands2.SequentialCommandGroup
+        if defer:
+            """
+            If the pathfind command isn't going to be run immediately, it needs to be deferred
+            to ensure the robot's current pose is accurate when the command is executed.
+            """
+            pathfinding_command: commands2.Command = commands2.DeferredCommand(
+                lambda target=target: AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0),
+                self._drivetrain_subsystem
+            )
+        else:
+            pathfinding_command = AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0)
 
         if distance > 0:
-            final_command = self.get_near_pose_command(target, distance) \
+            return self.get_near_pose_command(target, distance) \
                 .raceWith(pathfinding_command) \
                 .andThen(self.get_final_alignment_command(target))
-
         else:
-            final_command = pathfinding_command
-
-        if defer:
-            return commands2.DeferredCommand(lambda target=target, distance=distance: final_command, self._drivetrain_subsystem)
-        else:
-            return final_command
+            return pathfinding_command
