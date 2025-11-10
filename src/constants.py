@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from wpimath.geometry import Translation2d
 from wpimath.units import inches, meters_per_second, feetToMeters
 
-from .FRC3484_Lib.SC_Datatypes import *
-from .FRC3484_Lib.SC_ControllerMaps import Input
-from .FRC3484_Lib.SC_ControllerMaps import XboxControllerMap as ControllerMap
+from FRC3484_Lib.SC_Datatypes import *
+from FRC3484_Lib.SC_ControllerMaps import Input
+from FRC3484_Lib.SC_ControllerMaps import XboxControllerMap as ControllerMap
 
 @dataclass(frozen=True)
 class SwerveConstants:
