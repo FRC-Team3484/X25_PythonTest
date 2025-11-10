@@ -17,10 +17,10 @@ class SC_Pathfinding:
 
     Can do april tag math, and return commands for pathfinding
 
-    Args:
-        drivetrainSubsystem (DrivetrainSubsystem): The drivetrain subsystem
-        poseSupplier (DrivetrainSubsystem.poseSupplier): The pose supplier
-        aprilTagFieldLayout (AprilTagFieldLayout): The april tag field layout
+    Parameters:
+        - drivetrain_subsystem (DrivetrainSubsystem): The drivetrain subsystem
+        - pose_supplier (DrivetrainSubsystem.poseSupplier): The pose supplier
+        - april_tag_field_layout (AprilTagFieldLayout): The april tag field layout
     """
     def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field_layout: AprilTagFieldLayout):
         self._drivetrain_subsystem = drivetrain_subsystem
@@ -31,11 +31,11 @@ class SC_Pathfinding:
         """
         Returns the poses of april tags by id
 
-        Args:
-            aprilTagIds (list[int]): List of april tag ids
+        Parameters:
+            - april_tag_ids (list[int]): List of april tag ids
 
         Returns:
-            list[Pose2d]: The list of poses based on the specified ids
+            - list[Pose2d]: The list of poses based on the specified ids
         """
         poses: list[Pose2d] = []
 
@@ -50,12 +50,12 @@ class SC_Pathfinding:
         """
         Applies an offset to a pose
 
-        Args:
-            pose (Pose2d): The pose to apply the offset to
-            offset (Pose2d): The offset to apply
+        Parameters:
+            - pose (Pose2d): The pose to apply the offset to
+            - offset (Pose2d): The offset to apply
 
         Returns:
-            Pose2d: The resulting pose
+            - Pose2d: The resulting pose
         """
         return Pose2d(pose.translation() + offset.translation().rotateBy(pose.rotation()), pose.rotation() + offset.rotation())
     
@@ -65,12 +65,12 @@ class SC_Pathfinding:
         Will return the number of offsets equal to poses times offsets
         For example, if two poses and two offsets are provided, four poses will be returned
 
-        Args:
-            poses (list[Pose2d]): The poses to apply the offsets to
-            offsets (list[Pose2d]): The offsets to apply
+        Parameters:
+            - poses (list[Pose2d]): The poses to apply the offsets to
+            - offsets (list[Pose2d]): The offsets to apply
 
         Returns:
-            list[Pose2d]: The resulting poses
+            - list[Pose2d]: The resulting poses
         """
         return [self.apply_offset_to_pose(pose, offset) for pose in poses for offset in offsets]
 
@@ -78,11 +78,11 @@ class SC_Pathfinding:
         """
         Returns the nearest pose to the robot's current position
 
-        Args:
-            poses (list[Pose2d]): The list of poses to find the nearest pose from
+        Parameters:
+            - poses (list[Pose2d]): The list of poses to find the nearest pose from
 
         Returns:
-            Pose2d: The nearest pose
+            - Pose2d: The nearest pose
         """
         return self._pose_supplier().nearest(poses)
 
@@ -90,12 +90,12 @@ class SC_Pathfinding:
         """
         Returns a command to align the robot to a target pose
 
-        Args:
-            target (Pose2d): The target pose to align to
-            defer (bool): Whether to defer the command
+        Parameters:
+            - target (Pose2d): The target pose to align to
+            - defer (bool): Whether to defer the command
 
         Returns:
-            Command: The command to align to the target
+            - Command: The command to align to the target
         """
         _final_alignment_command: FinalAlignmentCommand = FinalAlignmentCommand(self._drivetrain_subsystem, target)
 
@@ -107,15 +107,15 @@ class SC_Pathfinding:
     def get_near_pose_command(self, target: Pose2d, distance: inches) -> commands2.Command:
         """
         Returns a command that does nothing and waits until the robot is within a distance, then exits
-        Designed to be used in a ParallelCommandGroup with the GetFinalAlignmentCommand, 
-            so once the robot is close to it's end position, the command group will exit
+        Designed to be used in a ParallelCommandGroup with FinalAlignmentCommand, 
+            so once the robot is close to its end position, the command group will exit
 
-        Args:
-            target (Pose2d): The target pose to align to
-            distance (inches): The distance to wait before exiting
+        Parameters:
+            - target (Pose2d): The target pose to align to
+            - distance (inches): The distance to wait before exiting
 
         Returns:
-            Command: The command to align to the target
+            - Command: The command to align to the target
         """
         return commands2.WaitUntilCommand(lambda: self._pose_supplier().translation().Distance(target.translation()) < distance)
     
@@ -125,13 +125,13 @@ class SC_Pathfinding:
         If a distance is provided, it will use a FinalAlignmentCommand to align to the target
             once the robot is within that distance
 
-        Args:
-            target (Pose2d): The target pose to drive to
-            distance (inches): The distance to wait before exiting
-            defer (bool): Whether to defer the command
+        Parameters:
+            - target (Pose2d): The target pose to drive to
+            - distance (inches): The distance to wait before exiting
+            - defer (bool): Whether to defer the command
 
         Returns:
-            Command: The command to drive to the target
+            - Command: The command to drive to the target
         """
         constraints: PathConstraints = PathConstraints(
             PathfindingConstants.MAX_VELOCITY, 
