@@ -1,15 +1,15 @@
-from typing import Callable, final
-from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
+from typing import Callable
+
+from robotpy_apriltag import AprilTagFieldLayout
 from wpimath.geometry import Pose2d, Pose3d
 import commands2
 from wpimath.units import inches
 
-from pathplannerlib.path import PathConstraints
 from pathplannerlib.auto import AutoBuilder
 
-from ..subsystems.drivetrain_subsystem import DrivetrainSubsystem
-from ..FRC3484_Lib.PathfindingConstants import PathfindingConstants
-from ..FRC3484_Lib.FinalAlignmentCommand import FinalAlignmentCommand
+from subsystems.drivetrain_subsystem import DrivetrainSubsystem
+from FRC3484_Lib.PathfindingConstants import PathfindingCommandConstants
+from FRC3484_Lib.FinalAlignmentCommand import FinalAlignmentCommand
 
 class SC_Pathfinding:
     """
@@ -23,9 +23,9 @@ class SC_Pathfinding:
         - april_tag_field_layout (AprilTagFieldLayout): The april tag field layout
     """
     def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field_layout: AprilTagFieldLayout):
-        self._drivetrain_subsystem = drivetrain_subsystem
-        self._pose_supplier = pose_supplier
-        self._april_tag_field_layout = april_tag_field_layout
+        self._drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
+        self._pose_supplier: Callable[[], Pose2d] = pose_supplier
+        self._april_tag_field_layout: AprilTagFieldLayout = april_tag_field_layout
 
     def get_april_tag_poses(self, april_tag_ids: list[int]) -> list[Pose2d]:
         """
@@ -86,7 +86,7 @@ class SC_Pathfinding:
         """
         return self._pose_supplier().nearest(poses)
 
-    def get_final_alignment_command(self, target: Pose2d, defer: bool = False) -> commands2.Command:
+    def get_final_alignment_command(self, target: Pose2d) -> commands2.Command:
         """
         Returns a command to align the robot to a target pose
 
@@ -97,12 +97,7 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to align to the target
         """
-        _final_alignment_command: FinalAlignmentCommand = FinalAlignmentCommand(self._drivetrain_subsystem, target)
-
-        if defer:
-            return commands2.DeferredCommand(lambda target=target: _final_alignment_command, self._drivetrain_subsystem)
-        else:
-            return _final_alignment_command
+        return FinalAlignmentCommand(self._drivetrain_subsystem, target)
 
     def get_near_pose_command(self, target: Pose2d, distance: inches) -> commands2.Command:
         """
@@ -117,9 +112,9 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to align to the target
         """
-        return commands2.WaitUntilCommand(lambda: self._pose_supplier().translation().Distance(target.translation()) < distance)
+        return commands2.WaitUntilCommand(lambda: self._pose_supplier().translation().distance(target.translation()) < distance)
     
-    def get_pathfind_command(self, target: Pose2d, distance: inches, defer: bool) -> commands2.Command:
+    def get_pathfind_command(self, target: Pose2d, distance: inches, defer: bool) -> commands2.Command | commands2.SequentialCommandGroup:
         """
         Returns a command that creates a path to drive to the target pose
         If a distance is provided, it will use a FinalAlignmentCommand to align to the target
@@ -133,22 +128,17 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to drive to the target
         """
-        constraints: PathConstraints = PathConstraints(
-            PathfindingConstants.MAX_VELOCITY, 
-            PathfindingConstants.MAX_ACCELERATION, 
-            PathfindingConstants.MAX_ANGULAR_VELOCITY, 
-            PathfindingConstants.MAX_ANGULAR_ACCELERATION
-        )
 
-        pathfinding_command: commands2.Command = AutoBuilder.pathfindToPose(target, constraints, 0.0)
+        pathfinding_command: commands2.Command = AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0)
+        final_command: commands2.Command | commands2.SequentialCommandGroup
 
         if distance > 0:
-            final_command: commands2.Command = self.get_near_pose_command(target, distance) \
+            final_command = self.get_near_pose_command(target, distance) \
                 .raceWith(pathfinding_command) \
                 .andThen(self.get_final_alignment_command(target))
 
         else:
-            final_command: commands2.Command = pathfinding_command
+            final_command = pathfinding_command
 
         if defer:
             return commands2.DeferredCommand(lambda target=target, distance=distance: final_command, self._drivetrain_subsystem)

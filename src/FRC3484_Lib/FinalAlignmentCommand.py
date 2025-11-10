@@ -6,7 +6,7 @@ from wpimath.geometry import Pose2d
 from pathplannerlib.controller import PPHolonomicDriveController, PathPlannerTrajectoryState, PIDConstants
 
 from subsystems.drivetrain_subsystem import DrivetrainSubsystem
-from ..FRC3484_Lib.PathfindingConstants import PathfindingConstants
+from FRC3484_Lib.PathfindingConstants import FinalAlignmentCommandConstants
 
 class FinalAlignmentCommand(commands2.Command):
     """
@@ -53,6 +53,6 @@ class FinalAlignmentCommand(commands2.Command):
     
     @override
     def isFinished(self) -> bool:
-        return self.counter >= PathfindingConstants.FINAL_ALIGN_EXIT or \
-            (self.drivetrain_subsystem.get_pose().translation().distance(self.target_pose.translation()) < PathfindingConstants.FINAL_POSE_TOLERANCE and \
-            abs(self.drivetrain_subsystem.get_pose().rotation().degrees() - self.target_pose.rotation().degrees()) < PathfindingConstants.FINAL_ROTATION_TOLERANCE)
+        return self.counter >= FinalAlignmentCommandConstants.FINAL_ALIGN_EXIT or \
+            (self.drivetrain_subsystem.get_pose().translation().distance(self.target_pose.translation()) < FinalAlignmentCommandConstants.FINAL_POSE_TOLERANCE and \
+            abs(self.drivetrain_subsystem.get_pose().rotation().degrees() - self.target_pose.rotation().degrees()) < FinalAlignmentCommandConstants.FINAL_ROTATION_TOLERANCE)
