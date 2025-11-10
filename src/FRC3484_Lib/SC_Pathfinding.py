@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, final
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from wpimath.geometry import Pose2d, Pose3d
 import commands2
@@ -143,9 +143,14 @@ class SC_Pathfinding:
         pathfinding_command: commands2.Command = AutoBuilder.pathfindToPose(target, constraints, 0.0)
 
         if distance > 0:
-            return self.get_near_pose_command(target, distance) \
+            final_command: commands2.Command = self.get_near_pose_command(target, distance) \
                 .raceWith(pathfinding_command) \
                 .andThen(self.get_final_alignment_command(target))
 
         else:
-            return pathfinding_command
+            final_command: commands2.Command = pathfinding_command
+
+        if defer:
+            return commands2.DeferredCommand(lambda target=target, distance=distance: final_command, self._drivetrain_subsystem)
+        else:
+            return final_command
