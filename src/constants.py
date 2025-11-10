@@ -60,6 +60,11 @@ class SwerveConstants:
         SC_SteerPIDConfig(0.5, 0.0, 0.0, 12, 100)
         for _ in range(len(MODULE_CONFIGS))
     ])
+
+@dataclass(frozen=True)
+class TeleopDriveConstants:
+    LOW_SPEED: float = 0.35
+    JOG_SPEED: float = 0.25
     
 @dataclass(frozen=True)
 class UserInterface:

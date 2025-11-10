@@ -203,7 +203,7 @@ class DrivetrainSubsystem(Subsystem):
         '''
         return self._pigeon.getRotation2d().rotateBy(self._pigeon_offset)
 
-    def set_heading(self, heading: Rotation2d) -> None:
+    def set_heading(self, heading: Rotation2d = Rotation2d()) -> None:
         '''
         Sets the current heading of the robot to a specified value without changing its position
 
