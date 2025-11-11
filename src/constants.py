@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
+from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
-from wpimath.units import inches, meters, meters_per_second, feetToMeters, inchesToMeters
+from wpimath.units import inches, meters_per_second, feetToMeters, inchesToMeters
 
 from FRC3484_Lib.SC_Datatypes import *
 from FRC3484_Lib.SC_ControllerMaps import Input
@@ -97,6 +98,10 @@ class UserInterface:
         GOTO_REEF_BUTTON: Input = ControllerMap.A_BUTTON
         GOTO_FEEDER_STATION_BUTTON: Input = ControllerMap.B_BUTTON
         GOTO_PROCESSOR_BUTTON: Input = ControllerMap.Y_BUTTON
+
+@dataclass(frozen=True)
+class VisionConstants:
+    APRIL_TAG_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagField.k2025ReefscapeWelded)
 
 @dataclass(frozen=True)
 class PathfindingConstants:
