@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from wpimath.geometry import Rotation3d, Translation2d, Translation3d
-from wpimath.units import inches, meters_per_second, feetToMeters, metersToInches, radiansToDegrees
+from wpimath.units import inches, inchesToMeters, meters_per_second, feetToMeters
 
 from photonlibpy import PoseStrategy
 
@@ -111,15 +111,11 @@ class VisionConstants:
             "Camera_1",
             Transform3d(
                 Translation3d(
-                    metersToInches(10), 
-                    metersToInches(11.31), 
-                    metersToInches(8.75)
+                    inchesToMeters(10), 
+                    inchesToMeters(11.31), 
+                    inchesToMeters(8.75)
                 ), 
-                Rotation3d(
-                    radiansToDegrees(0), 
-                    radiansToDegrees(-20.8), 
-                    radiansToDegrees(-23.2)
-                )
+                Rotation3d().fromDegrees(0, -20.8, 23.2)
             ),
             True
         ),
@@ -128,15 +124,11 @@ class VisionConstants:
             "Camera_2",
             Transform3d(
                 Translation3d(
-                    metersToInches(10), 
-                    metersToInches(-11.31), 
-                    metersToInches(8.75)
+                    inchesToMeters(10), 
+                    inchesToMeters(-11.31), 
+                    inchesToMeters(8.75)
                 ), 
-                Rotation3d(
-                    radiansToDegrees(0), 
-                    radiansToDegrees(-20.8), 
-                    radiansToDegrees(23.2)
-                )
+                Rotation3d().fromDegrees(0, -20.8, 23.2)
             ),
             True
         )
