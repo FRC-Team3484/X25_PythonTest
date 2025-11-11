@@ -93,3 +93,8 @@ class UserInterface:
         JOG_DOWN_BUTTON: Input = ControllerMap.DPAD_DOWN
         JOG_LEFT_BUTTON: Input = ControllerMap.DPAD_LEFT
         JOG_RIGHT_BUTTON: Input = ControllerMap.DPAD_RIGHT
+
+        GOTO_CORAL_BUTTON: Input = ControllerMap.A_BUTTON
+        GOTO_ALGAE_BUTTON: Input = ControllerMap.X_BUTTON
+        GOTO_FEEDER_STATION_BUTTON: Input = ControllerMap.B_BUTTON
+        GOTO_PROCESSOR_BUTTON: Input = ControllerMap.Y_BUTTON
