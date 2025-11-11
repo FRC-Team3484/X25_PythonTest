@@ -55,26 +55,25 @@ class Vision:
 
         camera_results: list[SC_CameraResults] = []
 
-        for i, pose_estimator in enumerate[PhotonPoseEstimator](self._pose_estimators):
+        for camera, pose_estimator in zip(self._cameras, self._pose_estimators):
             if pose_estimator.primaryStrategy == PoseStrategy.CLOSEST_TO_REFERENCE_POSE:
-                pose_estimator.referencePose = Pose3d(current_pose)
+                pose_estimator.referencePose = current_pose
 
-            results: list[PhotonPipelineResult] = self._cameras[i].getAllUnreadResults()
+            results: list[PhotonPipelineResult] = camera.getAllUnreadResults()
             vision_est: EstimatedRobotPose | None = None
 
             for result in results:
                 vision_est = pose_estimator.update(result)
             
             if vision_est:
-                est: EstimatedRobotPose = vision_est
                 camera_results.append(
                     SC_CameraResults(
-                        est.estimatedPose.toPose2d(),
-                        est.timestampSeconds,
+                        vision_est.estimatedPose.toPose2d(),
+                        vision_est.timestampSeconds,
                         self._get_estimated_std_devs(
                             results[-1], 
-                            est.estimatedPose.toPose2d(), 
-                            self._pose_estimators[len(self._pose_estimators) - 1])
+                            vision_est.estimatedPose.toPose2d(), 
+                            self._pose_estimators[-1])
                     )
                 )
         
