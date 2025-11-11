@@ -31,11 +31,16 @@ class Vision:
         self._cameras: list[PhotonCamera] = []
         self._pose_estimators: list[PhotonPoseEstimator] = []
 
-        for i, camera in enumerate[SC_CameraConfig](VisionConstants.CAMERA_CONFIGS):
-            if camera.enabled:
-                # PhotonPoseEstimator in Python requires the PhotonCamera object
-                self._cameras.append(PhotonCamera(camera.name))
-                self._pose_estimators.append(PhotonPoseEstimator(april_tag_layout, pose_strategy, self._cameras[i], camera.position))
+        for camera_config in camera_configs:
+            if camera_config.enabled:
+                camera: PhotonCamera = PhotonCamera(camera_config.name)
+                self._cameras.append(camera)
+                self._pose_estimators.append(PhotonPoseEstimator(
+                    april_tag_layout,
+                    pose_strategy,
+                    camera,
+                    camera_config.position
+                ))
 
     def get_camera_results(self, current_pose: Pose2d) -> list[SC_CameraResults]:
         """
