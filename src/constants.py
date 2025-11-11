@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
-from wpimath.geometry import Translation2d
-from wpimath.units import inches, meters_per_second, feetToMeters
+from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
+from wpimath.geometry import Rotation3d, Translation2d, Translation3d
+from wpimath.units import inches, meters_per_second, feetToMeters, metersToInches, radiansToDegrees
+
+from photonlibpy import PoseStrategy
 
 from FRC3484_Lib.SC_Datatypes import *
 from FRC3484_Lib.SC_ControllerMaps import Input
@@ -93,3 +96,48 @@ class UserInterface:
         JOG_DOWN_BUTTON: Input = ControllerMap.DPAD_DOWN
         JOG_LEFT_BUTTON: Input = ControllerMap.DPAD_LEFT
         JOG_RIGHT_BUTTON: Input = ControllerMap.DPAD_RIGHT
+
+@dataclass(frozen=True)
+class VisionConstants:
+    APRIL_TAG_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagField.k2025ReefscapeWelded)
+    POSE_STRATEGY: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR
+
+    SINGLE_TAG_STDDEV: tuple[float, float, float] = (4, 4, 8)
+    MULTI_TAG_STDDEV: tuple[float, float, float] = (0.5, 0.5, 1)
+
+    CAMERA_CONFIGS: list[SC_CameraConfig] = [
+        # Front Left
+        SC_CameraConfig(
+            "Camera_1",
+            Transform3d(
+                Translation3d(
+                    metersToInches(10), 
+                    metersToInches(11.31), 
+                    metersToInches(8.75)
+                ), 
+                Rotation3d(
+                    radiansToDegrees(0), 
+                    radiansToDegrees(-20.8), 
+                    radiansToDegrees(-23.2)
+                )
+            ),
+            True
+        ),
+        # Front Right
+        SC_CameraConfig(
+            "Camera_2",
+            Transform3d(
+                Translation3d(
+                    metersToInches(10), 
+                    metersToInches(-11.31), 
+                    metersToInches(8.75)
+                ), 
+                Rotation3d(
+                    radiansToDegrees(0), 
+                    radiansToDegrees(-20.8), 
+                    radiansToDegrees(23.2)
+                )
+            ),
+            True
+        )
+    ]
