@@ -3,16 +3,21 @@
 from enum import Enum
 
 import wpilib
-from commands2 import Command, ParallelCommandGroup
+from wpimath.geometry import Pose2d
+from commands2 import Command, InstantCommand, ParallelCommandGroup
 
 from config import *
+from constants import VisionConstants, PathfindingConstants
 from oi import DriverInterface
 from subsystems.drivetrain_subsystem import DrivetrainSubsystem
 from commands.teleop.teleop_drive_command import TeleopDriveCommand
+from FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
 
 class DriveState(Enum):
     DRIVE = 0
-    PATHFIND = 1
+    PATHFIND_REEF = 1
+    PATHFIND_FEEDER_STATION = 2
+    PATHFIND_PROCESSOR = 3
 
 class MyRobot(wpilib.TimedRobot):
     def __init__(self):
@@ -34,6 +39,23 @@ class MyRobot(wpilib.TimedRobot):
             self._drive_state_commands.addCommands(
                 TeleopDriveCommand(self._drivetrain, self._driver_oi)
             )
+
+        self._pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, VisionConstants.APRIL_TAG_LAYOUT)
+        self._pathfind_command: Command = InstantCommand()
+
+        # Pre-process april tag poses with offsets
+        self._reef_poses: list[Pose2d] = self._pathfinder.apply_offsets_to_poses(
+            self._pathfinder.get_april_tag_poses(PathfindingConstants.REEF_APRIL_TAG_IDS),
+            (PathfindingConstants.LEFT_REEF_OFFSET, PathfindingConstants.RIGHT_REEF_OFFSET)
+        )
+        self._feeder_station_poses: list[Pose2d] = self._pathfinder.apply_offsets_to_poses(
+            self._pathfinder.get_april_tag_poses(PathfindingConstants.FEEDER_STATION_APRIL_TAG_IDS),
+            (PathfindingConstants.LEFT_FEEDER_STATION_OFFSET, PathfindingConstants.RIGHT_FEEDER_STATION_OFFSET)
+        )
+        self._processor_poses: list[Pose2d] = self._pathfinder.apply_offsets_to_poses(
+            self._pathfinder.get_april_tag_poses(PathfindingConstants.PROCESSOR_APRIL_TAG_IDS),
+            (PathfindingConstants.PROCESSOR_OFFSET,)
+        )
 
     def robotInit(self):
         """
@@ -60,9 +82,50 @@ class MyRobot(wpilib.TimedRobot):
         """This function is called periodically during teleoperated mode."""
         match self._drive_state:
             case DriveState.DRIVE:
-                ...
-            case DriveState.PATHFIND:
-                ...
+                if self._driver_oi.get_goto_reef():
+                    self._pathfind_command = self._pathfinder.get_pathfind_command(
+                        SC_Pathfinding.get_nearest_pose(self._reef_poses),
+                        PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
+                        defer=False
+                    )
+
+                    self._cancel_drive_state()
+                    self._start_pathfind_state()
+
+                elif self._driver_oi.get_goto_feeder_station():
+                    self._pathfind_command = self._pathfinder.get_pathfind_command(
+                        SC_Pathfinding.get_nearest_pose(self._feeder_station_poses),
+                        PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
+                        defer=False
+                    )
+
+                    self._cancel_drive_state()
+                    self._start_pathfind_state()
+
+                elif self._driver_oi.get_goto_processor():
+                    self._pathfind_command = self._pathfinder.get_pathfind_command(
+                        SC_Pathfinding.get_nearest_pose(self._processor_poses),
+                        PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
+                        defer=False
+                    )
+
+                    self._cancel_drive_state()
+                    self._start_pathfind_state()
+
+            case DriveState.PATHFIND_REEF:
+                if not self._driver_oi.get_goto_reef():
+                    self._cancel_pathfind_state()
+                    self._start_drive_state()
+
+            case DriveState.PATHFIND_FEEDER_STATION:
+                if not self._driver_oi.get_goto_feeder_station():
+                    self._cancel_pathfind_state()
+                    self._start_drive_state()
+                
+            case DriveState.PATHFIND_PROCESSOR:
+                if not self._driver_oi.get_goto_processor():
+                    self._cancel_pathfind_state()
+                    self._start_drive_state()
 
     def testInit(self):
         """This function is called once each time the robot enters test mode."""
@@ -72,9 +135,20 @@ class MyRobot(wpilib.TimedRobot):
 
     def _start_drive_state(self):
         self._drive_state = DriveState.DRIVE
+        self._pathfind_command.cancel()
         if not self._drive_state_commands.isScheduled():
             self._drive_state_commands.schedule()
 
     def _cancel_drive_state(self):
         if self._drive_state_commands.isScheduled():
             self._drive_state_commands.cancel()
+
+    def _start_pathfind_state(self):
+        self._drive_state = DriveState.PATHFIND
+        self._cancel_drive_state()
+        if not self._pathfind_command.isScheduled():
+            self._pathfind_command.schedule()
+
+    def _cancel_pathfind_state(self):
+        if self._pathfind_command.isScheduled():
+            self._pathfind_command.cancel()
