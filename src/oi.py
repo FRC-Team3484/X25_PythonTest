@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 
-from .constants import UserInterface
-from .FRC3484_Lib.SC_ControllerMaps import GenericController
+from constants import UserInterface
+from FRC3484_Lib.SC_ControllerMaps import GenericController
 
 _DRIVER_INPUTS: UserInterface.Driver = UserInterface.Driver
 
-@dataclass
 class DriverInterface:
     _controller: GenericController = GenericController(
         _DRIVER_INPUTS.CONTROLLER_PORT,
@@ -13,6 +12,9 @@ class DriverInterface:
         _DRIVER_INPUTS.TRIGGER_LIMIT,
         _DRIVER_INPUTS.JOYSTICK_DEADBAND
     )
+
+    def __init__(self) -> None:
+        pass
 
     def get_throttle(self) -> float:
         return self._controller.get_axis(_DRIVER_INPUTS.THROTTLE_AXIS)

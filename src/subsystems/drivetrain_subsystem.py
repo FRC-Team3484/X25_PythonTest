@@ -13,11 +13,11 @@ from wpilib import SmartDashboard, Field2d, DriverStation
 
 from commands2 import Subsystem
 
-from .swerve_module import SwerveModule
-from ..constants import SwerveConstants
+from swerve_module import SwerveModule
+from constants import SwerveConstants
 
 class DrivetrainSubsystem(Subsystem):
-    def __init__(self, vision: None = None, oi: None = None) -> None:
+    def __init__(self, oi: None = None, vision: None = None) -> None:
         '''
         Swerve drivetrain subsystem
 
