@@ -132,4 +132,4 @@ class SC_CameraConfig:
 class SC_CameraResults:
     vision_measurement: Pose2d
     timestamp: seconds
-    standard_deviation: float
+    standard_deviation: tuple[float, float, float]
