@@ -64,10 +64,7 @@ class DrivetrainSubsystem(Subsystem):
             self.reset_odometry,
             self.get_chassis_speeds,
             lambda speeds, _: self.drive_robotcentric(speeds, open_loop=False), # Pathplanner has added a parameter for module feedforwards but doesn't have an example in any language that uses it
-            PPHolonomicDriveController(
-                PIDConstants(5.0, 0.0, 0.0),
-                PIDConstants(5.0, 0.0, 0.0)
-            ),
+            SwerveConstants.DRIVE_CONTROLLER,
             self._robot_config,
             lambda: DriverStation.getAlliance() == DriverStation.Alliance.kRed,
             self

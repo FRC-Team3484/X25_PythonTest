@@ -109,9 +109,9 @@ class TeleopDriveCommand(Command):
                         self._drivetrain.drive(throttle, strafe, rotation, True)
 
                 case DriveState.PIVOT:
-                        self._drivetrain.dynamic_pivot_drive(0, 0, 1.0 if self._oi.get_rotation() > 0 else -1.0, self._pivot_corner, True)
-                        if not self._oi.get_dynamic_pivot():
-                            self._state = DriveState.DRIVE
+                    self._drivetrain.dynamic_pivot_drive(0, 0, 1.0 if self._oi.get_rotation() > 0 else -1.0, self._pivot_corner, True)
+                    if not self._oi.get_dynamic_pivot():
+                        self._state = DriveState.DRIVE
 
     def end(self, interrupted: bool) -> None:
         self._drivetrain.stop_motors()
