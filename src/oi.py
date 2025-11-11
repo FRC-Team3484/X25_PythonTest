@@ -47,10 +47,8 @@ class DriverInterface:
     def get_jog_right(self) -> bool:
         return self._controller.get_button(_DRIVER_INPUTS.JOG_RIGHT_BUTTON)
     
-    def get_goto_coral(self) -> bool:
-        return self._controller.get_button(_DRIVER_INPUTS.GOTO_CORAL_BUTTON)
-    def get_goto_algae(self) -> bool:
-        return self._controller.get_button(_DRIVER_INPUTS.GOTO_ALGAE_BUTTON)
+    def get_goto_reef(self) -> bool:
+        return self._controller.get_button(_DRIVER_INPUTS.GOTO_REEF_BUTTON)
     def get_goto_feeder_station(self) -> bool:
         return self._controller.get_button(_DRIVER_INPUTS.GOTO_FEEDER_STATION_BUTTON)
     def get_goto_processor(self) -> bool:

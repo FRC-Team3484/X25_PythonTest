@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from wpimath.geometry import Translation2d
-from wpimath.units import inches, meters_per_second, feetToMeters
+from wpimath.geometry import Translation2d, Rotation2d, Pose2d
+from wpimath.units import inches, meters, meters_per_second, feetToMeters, inchesToMeters
 
 from FRC3484_Lib.SC_Datatypes import *
 from FRC3484_Lib.SC_ControllerMaps import Input
@@ -94,7 +94,21 @@ class UserInterface:
         JOG_LEFT_BUTTON: Input = ControllerMap.DPAD_LEFT
         JOG_RIGHT_BUTTON: Input = ControllerMap.DPAD_RIGHT
 
-        GOTO_CORAL_BUTTON: Input = ControllerMap.A_BUTTON
-        GOTO_ALGAE_BUTTON: Input = ControllerMap.X_BUTTON
+        GOTO_REEF_BUTTON: Input = ControllerMap.A_BUTTON
         GOTO_FEEDER_STATION_BUTTON: Input = ControllerMap.B_BUTTON
         GOTO_PROCESSOR_BUTTON: Input = ControllerMap.Y_BUTTON
+
+@dataclass(frozen=True)
+class PathfindingConstants:
+    FINAL_ALIGNMENT_DISTANCE: inches = 6.0
+
+    REEF_APRIL_TAG_IDS: tuple[int] = (6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22)
+    LEFT_REEF_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(-7)), Rotation2d.fromDegrees(180.0))
+    RIGHT_REEF_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(7)), Rotation2d.fromDegrees(180.0))
+
+    FEEDER_STATION_APRIL_TAG_IDS: tuple[int] = (1, 2, 12, 13)
+    LEFT_FEEDER_STATION_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(-22)), Rotation2d.fromDegrees(0.0))
+    RIGHT_FEEDER_STATION_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(22)), Rotation2d.fromDegrees(0.0))
+
+    PROCESSOR_APRIL_TAG_IDS: tuple[int] = (3, 16)
+    PROCESSOR_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), 0), Rotation2d.fromDegrees(180.0))
