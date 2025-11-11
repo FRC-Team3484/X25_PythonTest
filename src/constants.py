@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.units import inches, meters_per_second, feetToMeters, inchesToMeters
@@ -26,6 +27,11 @@ class SwerveConstants:
     DRIVE_SCALING: float = 1.0
     STEER_RATIO: float = 12.8 # Ratio from steer motor to wheel, steer encoder is 1:1
     MAX_WHEEL_SPEED: meters_per_second = feetToMeters(8.0) # feet per second
+
+    DRIVE_CONTROLLER = PPHolonomicDriveController(
+        PIDConstants(5.0, 0.0, 0.0),
+        PIDConstants(5.0, 0.0, 0.0)
+    )
 
     MODULE_POSITIONS: tuple[Translation2d] = (
         Translation2d(DRIVETRAIN_LENGTH / 2, DRIVETRAIN_WIDTH / 2),   # Front Left
