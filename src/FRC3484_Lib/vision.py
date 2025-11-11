@@ -93,9 +93,9 @@ class Vision:
         """
 
         est_std_dev: tuple[float, float, float] = VisionConstants.SINGLE_TAG_STDDEV
-        targets: list[PhotonTrackedTarget] = result.getTargets()
+        targets: list[PhotonTrackedTarget] = result.targets
         num_tags: int = 0
-        average_distance: meters = meters(0)
+        average_distance: meters = 0.0
 
         for target in targets:
             tag_pose: Pose3d | None = photon_estimator.fieldTags.getTagPose(target.getFiducialId())
@@ -114,8 +114,8 @@ class Vision:
         if num_tags == 1 and average_distance > meters(4):
             est_std_dev = (sys.float_info.max, sys.float_info.max, sys.float_info.max)
         else:
-            scale = 1 + (average_distance ** 2) / meters(30)
-            est_std_dev = tuple[float, float, float](x * scale for x in est_std_dev)
+            scale = 1.0 + (average_distance ** 2) / 30.0
+            est_std_dev = tuple([x * scale for x in est_std_dev])
 
         return est_std_dev
 
