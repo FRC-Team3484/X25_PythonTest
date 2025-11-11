@@ -3,7 +3,7 @@ from typing import Callable
 from robotpy_apriltag import AprilTagFieldLayout
 from wpimath.geometry import Pose2d, Pose3d
 import commands2
-from wpimath.units import inches
+from wpimath.units import inches, inchesToMeters
 
 from pathplannerlib.auto import AutoBuilder
 
@@ -112,7 +112,7 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to align to the target
         """
-        return commands2.WaitUntilCommand(lambda: self._pose_supplier().translation().distance(target.translation()) < distance)
+        return commands2.WaitUntilCommand(lambda: self._pose_supplier().translation().distance(target.translation()) < inchesToMeters(distance))
     
     def get_pathfind_command(self, target: Pose2d, distance: inches, defer: bool) -> commands2.Command | commands2.SequentialCommandGroup:
         """
