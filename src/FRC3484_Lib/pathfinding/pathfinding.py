@@ -1,5 +1,6 @@
 from typing import Callable
 
+from pathplannerlib.controller import PathFollowingController
 from robotpy_apriltag import AprilTagFieldLayout
 from wpimath.geometry import Pose2d, Pose3d
 import commands2
@@ -22,10 +23,11 @@ class SC_Pathfinding:
         - pose_supplier (DrivetrainSubsystem.poseSupplier): The pose supplier
         - april_tag_field_layout (AprilTagFieldLayout): The april tag field layout
     """
-    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field_layout: AprilTagFieldLayout):
+    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field_layout: AprilTagFieldLayout, drive_controller: PathFollowingController) -> None:
         self._drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
         self._pose_supplier: Callable[[], Pose2d] = pose_supplier
         self._april_tag_field_layout: AprilTagFieldLayout = april_tag_field_layout
+        self._drive_controller: PathFollowingController = drive_controller
 
     def get_april_tag_poses(self, april_tag_ids: list[int]) -> list[Pose2d]:
         """
@@ -97,7 +99,7 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to align to the target
         """
-        return FinalAlignmentCommand(self._drivetrain_subsystem, target)
+        return FinalAlignmentCommand(self._drivetrain_subsystem, target, self._drive_controller)
 
     def get_near_pose_command(self, target: Pose2d, distance: inches) -> commands2.Command:
         """
@@ -167,7 +169,7 @@ class SC_Pathfinding:
 
         if defer:
             return commands2.DeferredCommand(
-                lambda poses=poses: self.get_pathfind_command(self.get_nearest_pose(poses), distance, defer), 
+                lambda poses=poses: self.get_pathfind_command(self.get_nearest_pose(poses), distance, False), 
                 self._drivetrain_subsystem
             )
         else:

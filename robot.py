@@ -7,7 +7,7 @@ from wpimath.geometry import Pose2d
 from commands2 import Command, InstantCommand, ParallelCommandGroup
 
 from config import *
-from constants import VisionConstants, PathfindingConstants
+from constants import SwerveConstants, VisionConstants, PathfindingConstants
 from oi import DriverInterface
 from subsystems.drivetrain_subsystem import DrivetrainSubsystem
 from commands.teleop.teleop_drive_command import TeleopDriveCommand
@@ -40,7 +40,7 @@ class MyRobot(wpilib.TimedRobot):
                 TeleopDriveCommand(self._drivetrain, self._driver_oi)
             )
 
-        self._pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, VisionConstants.APRIL_TAG_LAYOUT)
+        self._pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, VisionConstants.APRIL_TAG_LAYOUT, SwerveConstants.DRIVE_CONTROLLER)
         self._pathfind_command: Command = InstantCommand()
 
         # Pre-process april tag poses with offsets
