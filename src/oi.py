@@ -47,6 +47,13 @@ class DriverInterface:
     def get_jog_right(self) -> bool:
         return self._controller.get_button(_DRIVER_INPUTS.JOG_RIGHT_BUTTON)
     
+    def get_goto_reef(self) -> bool:
+        return self._controller.get_button(_DRIVER_INPUTS.GOTO_REEF_BUTTON)
+    def get_goto_feeder_station(self) -> bool:
+        return self._controller.get_button(_DRIVER_INPUTS.GOTO_FEEDER_STATION_BUTTON)
+    def get_goto_processor(self) -> bool:
+        return self._controller.get_button(_DRIVER_INPUTS.GOTO_PROCESSOR_BUTTON)
+    
     def set_left_rumble(self, rumble: float) -> None:
         self._controller.set_left_rumble(rumble)
     def set_right_rumble(self, rumble: float) -> None:
