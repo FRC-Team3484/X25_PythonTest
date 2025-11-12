@@ -250,14 +250,14 @@ class GenericController(Subsystem):
         for i in range(self._controller.getAxisCount()):
             try:
                 inputs["axes"][i] = self._controller.getRawAxis(i)
-            except:
+            except Exception as e:
                 inputs["axes"][i] = 0.0
                 self._throw_error(f"Failed to get axis {i} state for controller {self._controller.getPort()}", e)
         
         for i in range(self._controller.getPOVCount()):
             try:
                 inputs["povs"][i] = self._controller.getPOV(i)
-            except:
+            except Exception as e:
                 inputs["povs"][i] = -1
                 self._throw_error(f"Failed to get POV {i} state for controller {self._controller.getPort()}", e)
 
