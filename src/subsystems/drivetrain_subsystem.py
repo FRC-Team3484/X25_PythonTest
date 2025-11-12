@@ -1,12 +1,11 @@
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
 
-from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import RobotConfig
 
 from wpimath.units import radians_per_second, meters_per_second, degreesToRadians
-from wpimath.kinematics import SwerveDrive4Kinematics, ChassisSpeeds, SwerveModuleState
+from wpimath.kinematics import SwerveDrive4Kinematics, ChassisSpeeds, SwerveModuleState, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Pose2d, Translation2d
 from wpilib import SmartDashboard, Field2d, DriverStation
@@ -235,7 +234,7 @@ class DrivetrainSubsystem(Subsystem):
             pose
         )
 
-    def get_module_positions(self) -> list[SwerveModule]:
+    def get_module_positions(self) -> list[SwerveModulePosition]:
         '''
         Gets the current positions of all drivetrain modules
         '''
