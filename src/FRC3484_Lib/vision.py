@@ -59,23 +59,20 @@ class Vision:
             if pose_estimator.primaryStrategy == PoseStrategy.CLOSEST_TO_REFERENCE_POSE:
                 pose_estimator.referencePose = current_pose
 
-            results: list[PhotonPipelineResult] = camera.getAllUnreadResults()
-            vision_est: EstimatedRobotPose | None = None
-
-            for result in results:
-                vision_est = pose_estimator.update(result)
+            for result in camera.getAllUnreadResults():
+                vision_est: EstimatedRobotPose | None = pose_estimator.update(result)
             
-            if vision_est:
-                camera_results.append(
-                    SC_CameraResults(
-                        vision_est.estimatedPose.toPose2d(),
-                        vision_est.timestampSeconds,
-                        self._get_estimated_std_devs(
-                            results[-1], 
-                            vision_est.estimatedPose.toPose2d(), 
-                            self._pose_estimators[-1])
+                if vision_est:
+                    camera_results.append(
+                        SC_CameraResults(
+                            vision_est.estimatedPose.toPose2d(),
+                            vision_est.timestampSeconds,
+                            self._get_estimated_std_devs(
+                                result, 
+                                vision_est.estimatedPose.toPose2d(), 
+                                pose_estimator)
+                        )
                     )
-                )
         
         return camera_results
 
