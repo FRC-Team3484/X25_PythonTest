@@ -12,6 +12,7 @@ from oi import DriverInterface
 from subsystems.drivetrain_subsystem import DrivetrainSubsystem
 from commands.teleop.teleop_drive_command import TeleopDriveCommand
 from FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
+from FRC3484_Lib.vision import Vision
 
 class DriveState(Enum):
     DRIVE = 0
@@ -28,7 +29,7 @@ class MyRobot(wpilib.TimedRobot):
 
         self._vision = None
         if VISION_ENABLED:
-            self._vision = None
+            self._vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_LAYOUT, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
 
         self._drivetrain: DrivetrainSubsystem|None = None
         if DRIVETRAIN_ENABLED:
