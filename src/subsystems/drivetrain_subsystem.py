@@ -16,10 +16,11 @@ from commands2 import Subsystem
 from FRC3484_Lib.vision import Vision
 from swerve_module import SwerveModule
 from constants import SwerveConstants
+from oi import OperatorInterface
 
 class DrivetrainSubsystem(Subsystem):
     ERROR_TIMEOUT: int = 100 # Number of periodic cycles to wait between error messages during competition
-    def __init__(self, oi: None, vision: Vision | None) -> None:
+    def __init__(self, oi: OperatorInterface | None, vision: Vision | None) -> None:
         '''
         Swerve drivetrain subsystem
 
@@ -56,7 +57,7 @@ class DrivetrainSubsystem(Subsystem):
         )
 
         self._vision: Vision | None = vision
-        self._oi: None = oi
+        self._oi: OperatorInterface | None = oi
         
         self._target_position: Pose2d = Pose2d()
 
@@ -95,17 +96,17 @@ class DrivetrainSubsystem(Subsystem):
         )
 
         if self._vision is not None:
-            # TODO: Check for oi get_ignore_vision (function does not exist yet)
-            try:
-                for result in self._vision.get_camera_results(self.get_pose()):
-                    new_std_devs: tuple[float, float, float] = result.standard_deviation
-                    self._odometry.addVisionMeasurement(
-                        result.vision_measurement,
-                        result.timestamp,
-                        new_std_devs
-                    )
-            except Exception as e:
-                self._throw_error("Error getting vision results", e)
+            if self._oi is not None and self._oi.get_ignore_vision():
+                try:
+                    for result in self._vision.get_camera_results(self.get_pose()):
+                        new_std_devs: tuple[float, float, float] = result.standard_deviation
+                        self._odometry.addVisionMeasurement(
+                            result.vision_measurement,
+                            result.timestamp,
+                            new_std_devs
+                        )
+                except Exception as e:
+                    self._throw_error("Error getting vision results", e)
 
         self._field.setRobotPose(self.get_pose())
         self._field.getObject('Target Position').setPose(self._target_position)

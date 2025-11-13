@@ -4,6 +4,8 @@ from constants import UserInterface
 from FRC3484_Lib.SC_ControllerMaps import GenericController
 
 _DRIVER_INPUTS: type[UserInterface.Driver] = UserInterface.Driver
+_OPERATOR_INPUTS: type[UserInterface.Operator] = UserInterface.Operator
+_TEST_INPUTS: type[UserInterface.Test] = UserInterface.Test
 
 class DriverInterface:
     _controller: GenericController = GenericController(
@@ -60,3 +62,22 @@ class DriverInterface:
         self._controller.set_right_rumble(rumble)
     def set_rumble(self, rumble: float) -> None:
         self._controller.set_rumble(rumble)
+
+class OperatorInterface:
+    _controller: GenericController = GenericController(
+        _OPERATOR_INPUTS.CONTROLLER_PORT,
+        _OPERATOR_INPUTS.AXIS_LIMIT,
+        _OPERATOR_INPUTS.TRIGGER_LIMIT,
+        _OPERATOR_INPUTS.JOYSTICK_DEADBAND
+    )
+
+    def get_ignore_vision(self) -> bool:
+        return False
+
+class TestInterface:
+    _controller: GenericController = GenericController(
+        _TEST_INPUTS.CONTROLLER_PORT,
+        _TEST_INPUTS.AXIS_LIMIT,
+        _TEST_INPUTS.TRIGGER_LIMIT,
+        _TEST_INPUTS.JOYSTICK_DEADBAND
+    )

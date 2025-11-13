@@ -106,6 +106,28 @@ class UserInterface:
         GOTO_FEEDER_STATION_BUTTON: Input = ControllerMap.B_BUTTON
         GOTO_PROCESSOR_BUTTON: Input = ControllerMap.Y_BUTTON
 
+    class Operator:
+        CONTROLLER_PORT: int = 1
+        JOYSTICK_DEADBAND: float = 0.02
+
+        AXIS_LIMIT: float = 0.5 # How far an axis must move to be considered "pressed"
+        TRIGGER_LIMIT: float = 0.5 # How far a trigger must be pressed to be considered "pressed"
+
+        RUMBLE_HIGH: float = 0.5
+        RUMBLE_LOW: float = 0.2
+        RUMBLE_OFF: float = 0.0
+
+    class Test:
+        CONTROLLER_PORT: int = 2
+        JOYSTICK_DEADBAND: float = 0.02
+
+        AXIS_LIMIT: float = 0.5 # How far an axis must move to be considered "pressed"
+        TRIGGER_LIMIT: float = 0.5 # How far a trigger must be pressed to be considered "pressed"
+
+        RUMBLE_HIGH: float = 0.5
+        RUMBLE_LOW: float = 0.2
+        RUMBLE_OFF: float = 0.0
+
 @dataclass(frozen=True)
 class VisionConstants:
     APRIL_TAG_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagField.k2025ReefscapeWelded)

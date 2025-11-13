@@ -8,7 +8,7 @@ from commands2 import Command, InstantCommand, ParallelCommandGroup
 
 from config import *
 from constants import SwerveConstants, VisionConstants, PathfindingConstants
-from oi import DriverInterface
+from oi import DriverInterface, OperatorInterface
 from subsystems.drivetrain_subsystem import DrivetrainSubsystem
 from commands.teleop.teleop_drive_command import TeleopDriveCommand
 from FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
@@ -26,6 +26,7 @@ class MyRobot(wpilib.TimedRobot):
         self._drive_state: DriveState = DriveState.DRIVE
 
         self._driver_oi: DriverInterface = DriverInterface()
+        self._operator_oi: OperatorInterface = OperatorInterface()
 
         self._vision = None
         if VISION_ENABLED:
@@ -33,7 +34,7 @@ class MyRobot(wpilib.TimedRobot):
 
         self._drivetrain: DrivetrainSubsystem|None = None
         if DRIVETRAIN_ENABLED:
-            self._drivetrain = DrivetrainSubsystem(self._driver_oi, self._vision)
+            self._drivetrain = DrivetrainSubsystem(self._operator_oi, self._vision)
 
         self._drive_state_commands: Command = ParallelCommandGroup()
         if DRIVETRAIN_ENABLED:
