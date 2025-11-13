@@ -13,7 +13,6 @@ from photonlibpy.photonPoseEstimator import PhotonPoseEstimator
 from photonlibpy.estimatedRobotPose import EstimatedRobotPose
 
 from FRC3484_Lib.SC_Datatypes import SC_CameraConfig, SC_CameraResults
-from constants import VisionConstants
 
 
 class Vision:
@@ -26,10 +25,14 @@ class Vision:
         - camera_configs (list[SC_CameraConfig]): A list of camera configs
         - april_tag_layout (AprilTagFieldLayout): The april tag field layout
         - pose_strategy (PoseStrategy): The pose strategy
+        - single_tag_st_devs (tuple[float, float, float]): The standard deviations for single tag detection
+        - multi_tag_st_devs (tuple[float, float, float]): The standard deviations for multi tag detection
     """
-    def __init__(self, camera_configs: list[SC_CameraConfig], april_tag_layout: AprilTagFieldLayout, pose_strategy: PoseStrategy) -> None:
+    def __init__(self, camera_configs: list[SC_CameraConfig], april_tag_layout: AprilTagFieldLayout, pose_strategy: PoseStrategy, single_tag_st_devs: tuple[float, float, float], multi_tag_st_devs: tuple[float, float, float]) -> None:
         self._cameras: list[PhotonCamera] = []
         self._pose_estimators: list[PhotonPoseEstimator] = []
+        self._single_tag_st_devs = single_tag_st_devs
+        self._multi_tag_st_devs = multi_tag_st_devs
 
         for camera_config in camera_configs:
             if camera_config.enabled:
@@ -89,7 +92,7 @@ class Vision:
             - tuple[float, float, float]: The estimated standard deviations
         """
 
-        est_std_dev: tuple[float, float, float] = VisionConstants.SINGLE_TAG_STDDEV
+        est_std_dev: tuple[float, float, float] = self._single_tag_st_devs
         targets: list[PhotonTrackedTarget] = result.targets
         num_tags: int = 0
         average_distance: meters = 0.0
@@ -106,7 +109,7 @@ class Vision:
         average_distance /= num_tags
 
         if num_tags > 1:
-            est_std_dev = VisionConstants.MULTI_TAG_STDDEV
+            est_std_dev = self._multi_tag_st_devs
         
         if num_tags == 1 and average_distance > meters(4):
             est_std_dev = (sys.float_info.max, sys.float_info.max, sys.float_info.max)
