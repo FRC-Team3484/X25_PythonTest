@@ -1,3 +1,4 @@
+from sqlite3.dbapi2 import Timestamp
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
 
@@ -12,11 +13,13 @@ from wpilib import SmartDashboard, Field2d, DriverStation
 
 from commands2 import Subsystem
 
+from FRC3484_Lib.vision import Vision
 from swerve_module import SwerveModule
 from constants import SwerveConstants
 
 class DrivetrainSubsystem(Subsystem):
-    def __init__(self, oi: None = None, vision: None = None) -> None:
+    ERROR_TIMEOUT: int = 100 # Number of periodic cycles to wait between error messages during competition
+    def __init__(self, oi: None, vision: Vision | None) -> None:
         '''
         Swerve drivetrain subsystem
 
@@ -52,7 +55,7 @@ class DrivetrainSubsystem(Subsystem):
             Pose2d()
         )
 
-        self._vision: None = vision
+        self._vision: Vision | None = vision
         self._oi: None = oi
         
         self._target_position: Pose2d = Pose2d()
@@ -73,20 +76,36 @@ class DrivetrainSubsystem(Subsystem):
         SmartDashboard.putData('Field', self._field)
         SmartDashboard.putBoolean('Drivetrain Diagnostics', False)
 
+        self._last_error: int = 0
+
     def periodic(self) -> None:
         '''
         - Updates the odometry of the drivetrain
+        - If there are vision results avaliable, updates the odometry using them instead
         - Updates the field visualization on SmartDashboard
         - Outputs diagnostic information to SmartDashboard if enabled
-        - TODO: Update odometry with vision corrections
         '''
+
+        if self._last_error > 0:
+            self._last_error -= 1
+
         self._odometry.update(
             self.get_heading(),
             self.get_module_positions()
         )
+
         if self._vision is not None:
-            # TODO: Vision pose correction would go here
-            pass
+            # TODO: Check for oi get_ignore_vision (function does not exist yet)
+            try:
+                for result in self._vision.get_camera_results(self.get_pose()):
+                    new_std_devs: tuple[float, float, float] = result.standard_deviation
+                    self._odometry.addVisionMeasurement(
+                        result.vision_measurement,
+                        result.timestamp,
+                        new_std_devs
+                    )
+            except Exception as e:
+                self._throw_error("Error getting vision results", e)
 
         self._field.setRobotPose(self.get_pose())
         self._field.getObject('Target Position').setPose(self._target_position)
@@ -286,3 +305,18 @@ class DrivetrainSubsystem(Subsystem):
             - pose (Pose2d): Where to show the target position on the field
         '''
         self._target_position = pose
+
+    def _throw_error(self, message:str, error:Exception) -> None:
+        '''
+        Throw an error if an issue occurs while getting an input.
+        Only halt execution if not in competition.
+        '''
+        if DriverStation.isFMSAttached():
+            # Don't spam errors
+            if self._last_error == 0:
+                print(message)
+                print(error)
+                self._last_error = self.ERROR_TIMEOUT
+        else:
+            print(message)
+            raise error

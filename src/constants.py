@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
+from photonlibpy import PoseStrategy
 from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
-from wpimath.geometry import Translation2d, Rotation2d, Pose2d
+from wpimath.geometry import Translation2d, Translation3d, Rotation2d, Rotation3d, Pose2d
 from wpimath.units import inches, meters_per_second, feetToMeters, inchesToMeters
 
 from FRC3484_Lib.SC_Datatypes import *
@@ -33,21 +34,21 @@ class SwerveConstants:
         PIDConstants(5.0, 0.0, 0.0)
     )
 
-    MODULE_POSITIONS: tuple[Translation2d] = (
+    MODULE_POSITIONS: tuple[Translation2d, ...] = (
         Translation2d(DRIVETRAIN_LENGTH / 2, DRIVETRAIN_WIDTH / 2),   # Front Left
         Translation2d(DRIVETRAIN_LENGTH / 2, -DRIVETRAIN_WIDTH / 2),  # Front Right
         Translation2d(-DRIVETRAIN_LENGTH / 2, DRIVETRAIN_WIDTH / 2),  # Back Left
         Translation2d(-DRIVETRAIN_LENGTH / 2, -DRIVETRAIN_WIDTH / 2), # Back Right
     )
 
-    MODULE_CONFIGS: tuple[SC_SwerveConfig] = (
+    MODULE_CONFIGS: tuple[SC_SwerveConfig, ...] = (
         SC_SwerveConfig(12, 13, 18, 27.685546875, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
         SC_SwerveConfig(10, 11, 19, 12.83203125, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
         SC_SwerveConfig(16, 17, 21, 38.759765625, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
         SC_SwerveConfig(14, 15, 20, 24.9609375, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
     )
 
-    MODULE_CURRENTS: tuple[SC_SwerveCurrentConfig] = (
+    MODULE_CURRENTS: tuple[SC_SwerveCurrentConfig, ...] = (
         SC_SwerveCurrentConfig(),
         SC_SwerveCurrentConfig(),
         SC_SwerveCurrentConfig(),
@@ -56,14 +57,14 @@ class SwerveConstants:
 
     _DRIVE_PID_CONFIG_LEFT = SC_DrivePIDConfig(0.93641, 0.0, 0.0, 2.2903, 0.39229, 0.04423)
     _DRIVE_PID_CONFIG_RIGHT = SC_DrivePIDConfig(0.92237, 0.0, 0.0, 2.2915, 0.387, 0.041887)
-    DRIVE_PID_CONFIGS: tuple[SC_DrivePIDConfig] = (
+    DRIVE_PID_CONFIGS: tuple[SC_DrivePIDConfig, ...] = (
         _DRIVE_PID_CONFIG_LEFT,
         _DRIVE_PID_CONFIG_RIGHT,
         _DRIVE_PID_CONFIG_LEFT,
         _DRIVE_PID_CONFIG_RIGHT,
     )
 
-    STEER_PID_CONFIGS: tuple[SC_SteerPIDConfig] = tuple([
+    STEER_PID_CONFIGS: tuple[SC_SteerPIDConfig, ...] = tuple([
         SC_SteerPIDConfig(0.5, 0.0, 0.0, 12, 100)
         for _ in range(len(MODULE_CONFIGS))
     ])
@@ -108,18 +109,51 @@ class UserInterface:
 @dataclass(frozen=True)
 class VisionConstants:
     APRIL_TAG_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagField.k2025ReefscapeWelded)
+    POSE_STRATEGY: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR
+
+    SINGLE_TAG_STDDEV: tuple[float, float, float] = (4, 4, 8)
+    MULTI_TAG_STDDEV: tuple[float, float, float] = (0.5, 0.5, 1)
+
+    CAMERA_CONFIGS: list[SC_CameraConfig] = [
+        # Front Left
+        SC_CameraConfig(
+            "Camera_1",
+            Transform3d(
+                Translation3d(
+                    inchesToMeters(10), 
+                    inchesToMeters(11.31), 
+                    inchesToMeters(8.75)
+                ), 
+                Rotation3d().fromDegrees(0, -20.8, 23.2)
+            ),
+            True
+        ),
+        # Front Right
+        SC_CameraConfig(
+            "Camera_2",
+            Transform3d(
+                Translation3d(
+                    inchesToMeters(10), 
+                    inchesToMeters(-11.31), 
+                    inchesToMeters(8.75)
+                ), 
+                Rotation3d().fromDegrees(0, -20.8, 23.2)
+            ),
+            True
+        )
+    ]
 
 @dataclass(frozen=True)
 class PathfindingConstants:
     FINAL_ALIGNMENT_DISTANCE: inches = 6.0
 
-    REEF_APRIL_TAG_IDS: tuple[int] = (6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22)
+    REEF_APRIL_TAG_IDS: tuple[int, ...] = (6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22)
     LEFT_REEF_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(-7)), Rotation2d.fromDegrees(180.0))
     RIGHT_REEF_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(7)), Rotation2d.fromDegrees(180.0))
 
-    FEEDER_STATION_APRIL_TAG_IDS: tuple[int] = (1, 2, 12, 13)
+    FEEDER_STATION_APRIL_TAG_IDS: tuple[int, ...] = (1, 2, 12, 13)
     LEFT_FEEDER_STATION_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(-22)), Rotation2d.fromDegrees(0.0))
     RIGHT_FEEDER_STATION_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(22)), Rotation2d.fromDegrees(0.0))
 
-    PROCESSOR_APRIL_TAG_IDS: tuple[int] = (3, 16)
+    PROCESSOR_APRIL_TAG_IDS: tuple[int, ...] = (3, 16)
     PROCESSOR_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), 0), Rotation2d.fromDegrees(180.0))
