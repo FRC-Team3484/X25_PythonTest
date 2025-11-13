@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from constants import UserInterface
 from FRC3484_Lib.SC_ControllerMaps import GenericController
 
-_DRIVER_INPUTS: UserInterface.Driver = UserInterface.Driver
+_DRIVER_INPUTS: type[UserInterface.Driver] = UserInterface.Driver
 
 class DriverInterface:
     _controller: GenericController = GenericController(
