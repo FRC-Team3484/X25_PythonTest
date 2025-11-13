@@ -3,7 +3,7 @@ from typing import Literal
 
 from phoenix6.hardware import TalonFX, CANcoder
 from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration, CurrentLimitsConfigs, MagnetSensorConfigs
-from phoenix6.signals import NeutralModeValue
+from phoenix6.signals import NeutralModeValue, InvertedValue, SensorDirectionValue
 
 from wpimath.trajectory import TrapezoidProfileRadians
 from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians
@@ -72,7 +72,7 @@ class SwerveModule:
             .with_supply_current_lower_limit(current_config.steer_current_threshold) \
             .with_supply_current_lower_time(current_config.steer_current_time)
 
-        self._steer_motor_config.motor_output.inverted = config.steer_motor_reversed
+        self._steer_motor_config.motor_output.inverted = InvertedValue(config.steer_motor_reversed)
         self._steer_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
         self._steer_motor.configurator.apply(self._steer_motor_config)
 
@@ -80,7 +80,7 @@ class SwerveModule:
         self._encoder_config: CANcoderConfiguration = CANcoderConfiguration()
         self._encoder_config.magnet_sensor = MagnetSensorConfigs() \
             .with_magnet_offset(degreesToRotations(config.encoder_offset)) \
-            .with_sensor_direction(config.encoder_reversed) \
+            .with_sensor_direction(SensorDirectionValue(config.encoder_reversed)) \
             .with_absolute_sensor_discontinuity_point(0.5)
         
         self._steer_encoder.configurator.apply(self._encoder_config)
@@ -112,7 +112,7 @@ class SwerveModule:
 
         # Scale the wheel speed down by the cosine of the angle error
         # This prevents the wheel from accelerating before it has a chance to face the correct direction
-        state.speed *= math.cos(state.angle - encoder_rotation)
+        state.speed *= (state.angle - encoder_rotation).cos()
 
         # In open loop, treat speed as a percent power
         # In closed loop, try to hit the actual speed
