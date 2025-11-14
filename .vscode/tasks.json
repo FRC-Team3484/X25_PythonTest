@@ -4,7 +4,8 @@
     {
       "label": "Deploy robot code using RobotPy",
       "type": "shell",
-      "command": "source ./.venv/bin/activate && robotpy deploy",
+      "linux": "source ./.venv/bin/activate && robotpy deploy",
+      "windows": ".\\.venv\\Scripts\\activate.ps1; robotpy deploy",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -14,7 +15,8 @@
     {
       "label": "Update robotpy and sync dependencies",
       "type": "shell",
-      "command": "source ./.venv/bin/activate && robotpy project update-robotpy && robotpy sync",
+      "linux": "source ./.venv/bin/activate && robotpy project update-robotpy && robotpy sync",
+      "windows": ".\\.venv\\Scripts\\activate.ps1; robotpy project update-robotpy; robotpy sync",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
