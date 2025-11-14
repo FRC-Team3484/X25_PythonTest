@@ -23,5 +23,16 @@
         "reveal": "always"
       },
     },
+    {
+      "label": "Run tests",
+      "type": "shell",
+      "linux": "source ./.venv/bin/activate && robotpy test",
+      "windows": ".\\.venv\\Scripts\\activate.ps1; robotpy test",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      },
+    }
   ]
 }
