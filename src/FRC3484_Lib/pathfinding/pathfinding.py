@@ -8,9 +8,9 @@ from wpimath.units import inches, inchesToMeters
 
 from pathplannerlib.auto import AutoBuilder
 
-from subsystems.drivetrain_subsystem import DrivetrainSubsystem
-from FRC3484_Lib.pathfinding.pathfinding_constants import PathfindingCommandConstants
-from FRC3484_Lib.pathfinding.final_alignment_command import FinalAlignmentCommand
+from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
+from src.FRC3484_Lib.pathfinding.pathfinding_constants import PathfindingCommandConstants
+from src.FRC3484_Lib.pathfinding.final_alignment_command import FinalAlignmentCommand
 
 class SC_Pathfinding:
     """

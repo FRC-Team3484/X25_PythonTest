@@ -13,10 +13,10 @@ from wpilib import SmartDashboard, Field2d, DriverStation
 
 from commands2 import Subsystem
 
-from FRC3484_Lib.vision import Vision
-from swerve_module import SwerveModule
-from constants import SwerveConstants
-from oi import OperatorInterface
+from src.FRC3484_Lib.vision import Vision
+from src.subsystems.swerve_module import SwerveModule
+from src.constants import SwerveConstants
+from src.oi import OperatorInterface
 
 class DrivetrainSubsystem(Subsystem):
     ERROR_TIMEOUT: int = 100 # Number of periodic cycles to wait between error messages during competition

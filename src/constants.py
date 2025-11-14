@@ -1,16 +1,13 @@
-from dataclasses import dataclass
-
 from photonlibpy import PoseStrategy
 from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from wpimath.geometry import Translation2d, Translation3d, Rotation2d, Rotation3d, Pose2d
 from wpimath.units import inches, meters_per_second, feetToMeters, inchesToMeters
 
-from FRC3484_Lib.SC_Datatypes import *
-from FRC3484_Lib.SC_ControllerMaps import Input
-from FRC3484_Lib.SC_ControllerMaps import XboxControllerMap as ControllerMap
+from src.FRC3484_Lib.SC_Datatypes import *
+from src.FRC3484_Lib.SC_ControllerMaps import Input
+from src.FRC3484_Lib.SC_ControllerMaps import XboxControllerMap as ControllerMap
 
-@dataclass(frozen=True)
 class SwerveConstants:
     FL: int = 0
     FR: int = 1
@@ -69,12 +66,10 @@ class SwerveConstants:
         for _ in range(len(MODULE_CONFIGS))
     ])
 
-@dataclass(frozen=True)
 class TeleopDriveConstants:
     LOW_SPEED: float = 0.35
     JOG_SPEED: float = 0.25
     
-@dataclass(frozen=True)
 class UserInterface:
     class Driver:
         CONTROLLER_PORT: int = 0
@@ -128,15 +123,14 @@ class UserInterface:
         RUMBLE_LOW: float = 0.2
         RUMBLE_OFF: float = 0.0
 
-@dataclass(frozen=True)
 class VisionConstants:
-    APRIL_TAG_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagField.k2025ReefscapeWelded)
+    APRIL_TAG_FIELD: AprilTagField = AprilTagField.k2025ReefscapeWelded
     POSE_STRATEGY: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR
 
     SINGLE_TAG_STDDEV: tuple[float, float, float] = (4, 4, 8)
     MULTI_TAG_STDDEV: tuple[float, float, float] = (0.5, 0.5, 1)
 
-    CAMERA_CONFIGS: list[SC_CameraConfig] = [
+    CAMERA_CONFIGS: tuple[SC_CameraConfig] = (
         # Front Left
         SC_CameraConfig(
             "Camera_1",
@@ -163,9 +157,9 @@ class VisionConstants:
             ),
             True
         )
-    ]
+    )
 
-@dataclass(frozen=True)
+
 class PathfindingConstants:
     FINAL_ALIGNMENT_DISTANCE: inches = 6.0
 

@@ -5,14 +5,14 @@ from wpimath.units import meters
 
 from photonlibpy import EstimatedRobotPose, PhotonCamera
 from photonlibpy.targeting import PhotonTrackedTarget
-from robotpy_apriltag import AprilTagFieldLayout
+from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 
 from photonlibpy.photonPoseEstimator import PoseStrategy
 from photonlibpy.targeting.photonPipelineResult import PhotonPipelineResult
 from photonlibpy.photonPoseEstimator import PhotonPoseEstimator
 from photonlibpy.estimatedRobotPose import EstimatedRobotPose
 
-from FRC3484_Lib.SC_Datatypes import SC_CameraConfig, SC_CameraResults
+from src.FRC3484_Lib.SC_Datatypes import SC_CameraConfig, SC_CameraResults
 
 
 class Vision:
@@ -28,11 +28,13 @@ class Vision:
         - single_tag_st_devs (tuple[float, float, float]): The standard deviations for single tag detection
         - multi_tag_st_devs (tuple[float, float, float]): The standard deviations for multi tag detection
     """
-    def __init__(self, camera_configs: list[SC_CameraConfig], april_tag_layout: AprilTagFieldLayout, pose_strategy: PoseStrategy, single_tag_st_devs: tuple[float, float, float], multi_tag_st_devs: tuple[float, float, float]) -> None:
+    def __init__(self, camera_configs: list[SC_CameraConfig], april_tag_field: AprilTagField, pose_strategy: PoseStrategy, single_tag_st_devs: tuple[float, float, float], multi_tag_st_devs: tuple[float, float, float]) -> None:
         self._cameras: list[PhotonCamera] = []
         self._pose_estimators: list[PhotonPoseEstimator] = []
         self._single_tag_st_devs = single_tag_st_devs
         self._multi_tag_st_devs = multi_tag_st_devs
+
+        april_tag_layout = AprilTagFieldLayout.loadField(april_tag_field)
 
         for camera_config in camera_configs:
             if camera_config.enabled:

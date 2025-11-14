@@ -7,4 +7,4 @@ DRIVETRAIN_ENABLED = True
 VISION_ENABLED = False
 
 # Disable All Commands
-COMMANDS_ENABLED = True
+COMMANDS_ENABLED = False

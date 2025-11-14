@@ -5,8 +5,8 @@ from wpimath.geometry import Pose2d
 
 from pathplannerlib.controller import PathFollowingController, PathPlannerTrajectoryState
 
-from subsystems.drivetrain_subsystem import DrivetrainSubsystem
-from FRC3484_Lib.pathfinding.pathfinding_constants import FinalAlignmentCommandConstants
+from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
+from src.FRC3484_Lib.pathfinding.pathfinding_constants import FinalAlignmentCommandConstants
 
 class FinalAlignmentCommand(commands2.Command):
     """

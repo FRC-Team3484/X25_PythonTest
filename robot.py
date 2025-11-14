@@ -6,13 +6,13 @@ import wpilib
 from wpimath.geometry import Pose2d
 from commands2 import Command, InstantCommand, ParallelCommandGroup
 
-from config import *
-from constants import SwerveConstants, VisionConstants, PathfindingConstants
-from oi import DriverInterface, OperatorInterface
-from subsystems.drivetrain_subsystem import DrivetrainSubsystem
-from commands.teleop.teleop_drive_command import TeleopDriveCommand
-from FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
-from FRC3484_Lib.vision import Vision
+from src.config import *
+from src.constants import SwerveConstants, VisionConstants, PathfindingConstants
+from src.oi import DriverInterface, OperatorInterface
+from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
+from src.commands.teleop.teleop_drive_command import TeleopDriveCommand
+from src.FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
+from src.FRC3484_Lib.vision import Vision
 
 class DriveState(Enum):
     DRIVE = 0
