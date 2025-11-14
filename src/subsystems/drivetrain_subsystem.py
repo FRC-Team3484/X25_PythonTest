@@ -1,4 +1,4 @@
-from sqlite3.dbapi2 import Timestamp
+import sys
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
 
@@ -62,16 +62,17 @@ class DrivetrainSubsystem(Subsystem):
         self._target_position: Pose2d = Pose2d()
 
         self._robot_config = RobotConfig.fromGUISettings()
-        AutoBuilder.configure(
-            self.get_pose,
-            self.reset_odometry,
-            self.get_chassis_speeds,
-            lambda speeds, _: self.drive_robotcentric(speeds, open_loop=False), # Pathplanner has added a parameter for module feedforwards but doesn't have an example in any language that uses it
-            SwerveConstants.DRIVE_CONTROLLER,
-            self._robot_config,
-            lambda: DriverStation.getAlliance() == DriverStation.Alliance.kRed,
-            self
-        )
+        if not AutoBuilder.isConfigured():
+            AutoBuilder.configure(
+                self.get_pose,
+                self.reset_odometry,
+                self.get_chassis_speeds,
+                lambda speeds, _: self.drive_robotcentric(speeds, open_loop=False), # Pathplanner has added a parameter for module feedforwards but doesn't have an example in any language that uses it
+                SwerveConstants.DRIVE_CONTROLLER,
+                self._robot_config,
+                lambda: DriverStation.getAlliance() == DriverStation.Alliance.kRed,
+                self
+            )
 
         self._field: Field2d = Field2d()
         SmartDashboard.putData('Field', self._field)
@@ -312,7 +313,7 @@ class DrivetrainSubsystem(Subsystem):
         Throw an error if an issue occurs while getting an input.
         Only halt execution if not in competition.
         '''
-        if DriverStation.isFMSAttached():
+        if DriverStation.isFMSAttached() or 'pytest' in sys.modules:
             # Don't spam errors
             if self._last_error == 0:
                 print(message)

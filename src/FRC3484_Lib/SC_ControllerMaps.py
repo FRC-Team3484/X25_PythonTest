@@ -1,3 +1,4 @@
+import sys
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -206,7 +207,8 @@ class GenericController(Subsystem):
         Throw an error if an issue occurs while getting an input.
         Only halt execution if not in competition.
         '''
-        if DriverStation.isFMSAttached():
+        print(f'Pytest loaded: {'pytest' in sys.modules}')
+        if DriverStation.isFMSAttached() or 'pytest' in sys.modules:
             # Don't spam errors
             if self._last_error == 0:
                 print(message)

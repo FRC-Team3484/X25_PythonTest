@@ -17,7 +17,7 @@ class DriveState(Enum):
 class TeleopDriveCommand(Command):
     def __init__(self, drivetrain: DrivetrainSubsystem, driver_oi: DriverInterface|None = None) -> None:
         super().__init__()
-        self.addRequirements([drivetrain])
+        self.addRequirements(drivetrain)
 
         self._drivetrain: DrivetrainSubsystem = drivetrain
         self._oi: DriverInterface|None = driver_oi

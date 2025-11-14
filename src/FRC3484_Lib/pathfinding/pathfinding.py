@@ -1,7 +1,7 @@
 from typing import Callable
 
 from pathplannerlib.controller import PathFollowingController
-from robotpy_apriltag import AprilTagFieldLayout
+from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from wpimath.geometry import Pose2d, Pose3d
 import commands2
 from wpimath.units import inches, inchesToMeters
@@ -23,10 +23,10 @@ class SC_Pathfinding:
         - pose_supplier (DrivetrainSubsystem.poseSupplier): The pose supplier
         - april_tag_field_layout (AprilTagFieldLayout): The april tag field layout
     """
-    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field_layout: AprilTagFieldLayout, drive_controller: PathFollowingController) -> None:
+    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field: AprilTagFieldLayout, drive_controller: PathFollowingController) -> None:
         self._drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
         self._pose_supplier: Callable[[], Pose2d] = pose_supplier
-        self._april_tag_field_layout: AprilTagFieldLayout = april_tag_field_layout
+        self._april_tag_field_layout: AprilTagFieldLayout = AprilTagFieldLayout.loadField(april_tag_field)
         self._drive_controller: PathFollowingController = drive_controller
 
     def get_april_tag_poses(self, april_tag_ids: list[int]) -> list[Pose2d]:

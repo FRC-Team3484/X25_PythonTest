@@ -30,7 +30,7 @@ class MyRobot(wpilib.TimedRobot):
 
         self._vision = None
         if VISION_ENABLED:
-            self._vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_LAYOUT, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
+            self._vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
 
         self._drivetrain: DrivetrainSubsystem|None = None
         if DRIVETRAIN_ENABLED:
@@ -42,7 +42,7 @@ class MyRobot(wpilib.TimedRobot):
                 TeleopDriveCommand(self._drivetrain, self._driver_oi)
             )
 
-        self._pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, VisionConstants.APRIL_TAG_LAYOUT, SwerveConstants.DRIVE_CONTROLLER)
+        self._pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, VisionConstants.APRIL_TAG_FIELD, SwerveConstants.DRIVE_CONTROLLER)
         self._pathfind_command: Command = InstantCommand()
 
         # Pre-process april tag poses with offsets

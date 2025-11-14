@@ -20,6 +20,7 @@ class FinalAlignmentCommand(commands2.Command):
     """
     def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, target_pose: Pose2d, drive_controller: PathFollowingController) -> None:
         super().__init__()
+        self.addRequirements(drivetrain_subsystem)
         self.drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
         self.goal_state: PathPlannerTrajectoryState = PathPlannerTrajectoryState(pose=target_pose)
 
