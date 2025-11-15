@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 from enum import Enum
-from typing import Callable
+from typing import Callable, Optional
 
 import wpilib
 from wpimath.geometry import Pose2d
 from commands2 import Command, InstantCommand, ParallelCommandGroup
 
 from src.config import *
+from src.constants import VisionConstants
 from src.oi import DriverInterface, OperatorInterface
+
 
 class DriveState(Enum):
     DRIVE = 0
@@ -33,13 +35,11 @@ class MyRobot(wpilib.TimedRobot):
         """
         Subsystems
         """
-
+        
+        self._vision: Optional["Vision"] = None
         if VISION_ENABLED:
-            from src.constants import VisionConstants
             from src.FRC3484_Lib.vision import Vision
-            self._vision: Vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
-        else:
-            self._vision: None = None
+            self._vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
 
         self._pathfind_command: Command = InstantCommand()
 
@@ -127,7 +127,7 @@ class MyRobot(wpilib.TimedRobot):
                         self._start_pathfind_state(DriveState.PATHFIND_FEEDER_STATION)
 
                     elif self._driver_oi.get_goto_processor():
-                        self._pathfind_command = self._pathfind_to_processor
+                        self._pathfind_command = self._pathfind_to_processor()
 
                         self._cancel_drive_state()
                         self._start_pathfind_state(DriveState.PATHFIND_PROCESSOR)
