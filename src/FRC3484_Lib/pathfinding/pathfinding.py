@@ -23,7 +23,7 @@ class SC_Pathfinding:
         - pose_supplier (DrivetrainSubsystem.poseSupplier): The pose supplier
         - april_tag_field_layout (AprilTagFieldLayout): The april tag field layout
     """
-    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field: AprilTagFieldLayout, drive_controller: PathFollowingController) -> None:
+    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], april_tag_field: AprilTagField, drive_controller: PathFollowingController) -> None:
         self._drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
         self._pose_supplier: Callable[[], Pose2d] = pose_supplier
         self._april_tag_field_layout: AprilTagFieldLayout = AprilTagFieldLayout.loadField(april_tag_field)
