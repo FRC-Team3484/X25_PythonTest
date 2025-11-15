@@ -80,7 +80,7 @@ class MyRobot(wpilib.TimedRobot):
                 )
                 
                 pathfind_function: Callable[[list[Pose2d]], Command] = lambda poses: pathfinder.get_pathfind_command(
-                                SC_Pathfinding.get_nearest_pose(poses),
+                                pathfinder.get_nearest_pose(poses),
                                 PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
                                 defer=False
                             )

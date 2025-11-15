@@ -1,4 +1,5 @@
 import sys
+from typing import Iterable
 
 from wpimath.geometry import Pose2d, Pose3d
 from wpimath.units import meters
@@ -28,7 +29,7 @@ class Vision:
         - single_tag_st_devs (tuple[float, float, float]): The standard deviations for single tag detection
         - multi_tag_st_devs (tuple[float, float, float]): The standard deviations for multi tag detection
     """
-    def __init__(self, camera_configs: list[SC_CameraConfig], april_tag_field: AprilTagField, pose_strategy: PoseStrategy, single_tag_st_devs: tuple[float, float, float], multi_tag_st_devs: tuple[float, float, float]) -> None:
+    def __init__(self, camera_configs: Iterable[SC_CameraConfig], april_tag_field: AprilTagField, pose_strategy: PoseStrategy, single_tag_st_devs: tuple[float, float, float], multi_tag_st_devs: tuple[float, float, float]) -> None:
         self._cameras: list[PhotonCamera] = []
         self._pose_estimators: list[PhotonPoseEstimator] = []
         self._single_tag_st_devs = single_tag_st_devs
@@ -117,7 +118,7 @@ class Vision:
             est_std_dev = (sys.float_info.max, sys.float_info.max, sys.float_info.max)
         else:
             scale = 1.0 + (average_distance ** 2) / 30.0
-            est_std_dev = tuple([x * scale for x in est_std_dev])
+            est_std_dev = (est_std_dev[0] * scale, est_std_dev[1] * scale, est_std_dev[2] * scale)
 
         return est_std_dev
 

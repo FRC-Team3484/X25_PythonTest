@@ -1,4 +1,5 @@
 import sys
+
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
 
@@ -43,7 +44,7 @@ class DrivetrainSubsystem(Subsystem):
             for i in range(len(SwerveConstants.MODULE_CONFIGS))]
         
         self._kinematics:SwerveDrive4Kinematics = SwerveDrive4Kinematics(*SwerveConstants.MODULE_POSITIONS)
-        self._kinematics.resetHeadings([module.get_position().angle for module in self._modules])
+        self._kinematics.resetHeadings((self._modules[0].get_position().angle, self._modules[1].get_position().angle, self._modules[2].get_position().angle, self._modules[3].get_position().angle))
 
         self._pigeon: Pigeon2 = Pigeon2(SwerveConstants.PIGEON_ID, SwerveConstants.CANBUS_NAME)
         self._pigeon.configurator.apply(Pigeon2Configuration())
@@ -156,7 +157,7 @@ class DrivetrainSubsystem(Subsystem):
                 - True: treat speed as a percent power from -1.0 to 1.0
                 - False: treat speed as a velocity in meters per second
         '''
-        states: list[SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds)
+        states: tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds)
         self.set_module_states(states, open_loop, optimize=True)
 
     def dynamic_pivot_drive(self, x_speed: meters_per_second, y_speed: meters_per_second, rot_speed: radians_per_second, center_of_rotation: Translation2d, open_loop: bool) -> None:
@@ -191,14 +192,14 @@ class DrivetrainSubsystem(Subsystem):
                 - True: treat speed as a percent power from -1.0 to 1.0
                 - False: treat speed as a velocity in meters per second
         '''
-        states: list[SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds, center_of_rotation)
+        states: tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState] = self._kinematics.toSwerveModuleStates(speeds, center_of_rotation)
         self.set_module_states(states, open_loop, optimize=True)
 
-    def set_module_states(self, desired_states: list[SwerveModuleState], open_loop: bool, optimize: bool) -> None:
+    def set_module_states(self, desired_states: tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState], open_loop: bool, optimize: bool) -> None:
         '''
         Sets the desired states (wheel speeds and steer angles) for all drivetrain modules
         Parameters:
-            - desired_states (list[SwerveModuleState]): The desired states for all modules
+            - desired_states (tuple[SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState]): The desired states for all modules
             - open_loop (bool): 
                 - True: treat speed as a percent power from -1.0 to 1.0
                 - False: treat speed as a velocity in meters per second
@@ -255,19 +256,27 @@ class DrivetrainSubsystem(Subsystem):
             pose
         )
 
-    def get_module_positions(self) -> list[SwerveModulePosition]:
+    def get_module_positions(self) -> tuple[SwerveModulePosition, SwerveModulePosition, SwerveModulePosition, SwerveModulePosition]:
         '''
         Gets the current positions of all drivetrain modules
         '''
-        return [module.get_position() for module in self._modules]
+        return (
+            self._modules[0].get_position(), 
+            self._modules[1].get_position(), 
+            self._modules[2].get_position(), 
+            self._modules[3].get_position()
+        )
 
     def get_chassis_speeds(self) -> ChassisSpeeds:
         '''
         Gets the current chassis speeds of the drivetrain
         '''
-        return self._kinematics.toChassisSpeeds(
-            [module.get_state() for module in self._modules]
-        )
+        return self._kinematics.toChassisSpeeds((
+            self._modules[0].get_state(), 
+            self._modules[1].get_state(), 
+            self._modules[2].get_state(), 
+            self._modules[3].get_state()
+        ))
 
     def stop_motors(self) -> None:
         '''

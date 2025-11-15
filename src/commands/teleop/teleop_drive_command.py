@@ -3,7 +3,7 @@ from enum import Enum
 
 from commands2 import Command
 from wpilib import DriverStation
-from wpimath.geometry import Translation2d
+from wpimath.geometry import Translation2d, Rotation2d
 from wpimath.kinematics import SwerveModuleState, ChassisSpeeds
 
 from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
@@ -33,7 +33,7 @@ class TeleopDriveCommand(Command):
         Drivetrain is field-centric but controls are driver-centric so we need to know the alliance color to know if conrols should be flipped.
         Do this every time the drive command is initialized so we don't need to restart code to change alliance during testing.
         '''
-        alliance: DriverStation.Alliance = DriverStation.getAlliance()
+        alliance: DriverStation.Alliance | None = DriverStation.getAlliance()
         if alliance is None:
             print('Teleop Drive Command failed to determine alliance color')
         else:
@@ -67,12 +67,12 @@ class TeleopDriveCommand(Command):
                         )
 
                     elif self._oi.get_hold_mode():
-                        self._drivetrain.set_module_states([
-                            SwerveModuleState(0.0, math.radians(45.0)),
-                            SwerveModuleState(0.0, math.radians(135.0)),
-                            SwerveModuleState(0.0, math.radians(225.0)),
-                            SwerveModuleState(0.0, math.radians(315.0))
-                        ], True, False)
+                        self._drivetrain.set_module_states((
+                            SwerveModuleState(0.0, Rotation2d.fromDegrees(45.0)),
+                            SwerveModuleState(0.0, Rotation2d.fromDegrees(135.0)),
+                            SwerveModuleState(0.0, Rotation2d.fromDegrees(225.0)),
+                            SwerveModuleState(0.0, Rotation2d.fromDegrees(315.0))
+                        ), True, False)
 
                     elif any(povs):
                         strafe: float = 0.0

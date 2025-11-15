@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Iterable
 
 from pathplannerlib.controller import PathFollowingController
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
@@ -29,7 +29,7 @@ class SC_Pathfinding:
         self._april_tag_field_layout: AprilTagFieldLayout = AprilTagFieldLayout.loadField(april_tag_field)
         self._drive_controller: PathFollowingController = drive_controller
 
-    def get_april_tag_poses(self, april_tag_ids: list[int]) -> list[Pose2d]:
+    def get_april_tag_poses(self, april_tag_ids: Iterable[int]) -> list[Pose2d]:
         """
         Returns the poses of april tags by id
 
@@ -61,7 +61,7 @@ class SC_Pathfinding:
         """
         return Pose2d(pose.translation() + offset.translation().rotateBy(pose.rotation()), pose.rotation() + offset.rotation())
     
-    def apply_offsets_to_poses(self, poses: list[Pose2d], offsets: list[Pose2d]) -> list[Pose2d]:
+    def apply_offsets_to_poses(self, poses: Iterable[Pose2d], offsets: Iterable[Pose2d]) -> list[Pose2d]:
         """
         Applies a list of offsets to a list of poses
         Will return the number of offsets equal to poses times offsets
@@ -76,7 +76,7 @@ class SC_Pathfinding:
         """
         return [self.apply_offset_to_pose(pose, offset) for pose in poses for offset in offsets]
 
-    def get_nearest_pose(self, poses: list[Pose2d]) -> Pose2d:
+    def get_nearest_pose(self, poses: Iterable[Pose2d]) -> Pose2d:
         """
         Returns the nearest pose to the robot's current position
 
@@ -86,6 +86,8 @@ class SC_Pathfinding:
         Returns:
             - Pose2d: The nearest pose
         """
+        if not type(poses) == list:
+            poses = list(poses)
         return self._pose_supplier().nearest(poses)
 
     def get_final_alignment_command(self, target: Pose2d) -> commands2.Command:
@@ -150,7 +152,7 @@ class SC_Pathfinding:
         else:
             return pathfinding_command
 
-    def go_to_nearest_pose(self, poses: list[Pose2d], distance: inches = 0.0, defer: bool = False) -> commands2.Command:
+    def go_to_nearest_pose(self, poses: Iterable[Pose2d], distance: inches = 0.0, defer: bool = False) -> commands2.Command:
         """
         Returns a command that creates a path to first find the nearest pose from
             the given list of poses, then generates a command to drive to that pose
