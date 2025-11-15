@@ -24,20 +24,20 @@ class MyRobot(wpilib.TimedRobot):
         self._driver_oi: DriverInterface = DriverInterface()
         self._operator_oi: OperatorInterface = OperatorInterface()
 
-        self._vision = None
+        self._vision: Vision | None = None
         if VISION_ENABLED:
             from src.constants import VisionConstants
             from src.FRC3484_Lib.vision import Vision
             self._vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
 
-        self._drivetrain = None
+        self._drivetrain: DrivetrainSubsystem | None = None
         if DRIVETRAIN_ENABLED:
             from src.constants import SwerveConstants
             from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
             self._drivetrain = DrivetrainSubsystem(self._operator_oi, self._vision)
 
         self._drive_state_commands: Command = ParallelCommandGroup()
-        if DRIVETRAIN_ENABLED:
+        if DRIVETRAIN_ENABLED and COMMANDS_ENABLED:
             from src.commands.teleop.teleop_drive_command import TeleopDriveCommand
             self._drive_state_commands.addCommands(
                 TeleopDriveCommand(self._drivetrain, self._driver_oi)
