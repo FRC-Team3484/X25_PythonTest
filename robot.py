@@ -24,24 +24,22 @@ class MyRobot(wpilib.TimedRobot):
         self._driver_oi: DriverInterface = DriverInterface()
         self._operator_oi: OperatorInterface = OperatorInterface()
 
-        self._vision: Vision | None = None
+        """
+        Commands
+        """
+        # To be populated as subsystems are created
+        self._drive_state_commands: Command = ParallelCommandGroup()
+
+        """
+        Subsystems
+        """
+
         if VISION_ENABLED:
             from src.constants import VisionConstants
             from src.FRC3484_Lib.vision import Vision
-            self._vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
-
-        self._drivetrain: DrivetrainSubsystem | None = None
-        if DRIVETRAIN_ENABLED:
-            from src.constants import SwerveConstants
-            from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
-            self._drivetrain = DrivetrainSubsystem(self._operator_oi, self._vision)
-
-        self._drive_state_commands: Command = ParallelCommandGroup()
-        if DRIVETRAIN_ENABLED and COMMANDS_ENABLED:
-            from src.commands.teleop.teleop_drive_command import TeleopDriveCommand
-            self._drive_state_commands.addCommands(
-                TeleopDriveCommand(self._drivetrain, self._driver_oi)
-            )
+            self._vision: Vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
+        else:
+            self._vision: None = None
 
         self._pathfind_command: Command = InstantCommand()
 
@@ -50,34 +48,45 @@ class MyRobot(wpilib.TimedRobot):
         self._pathfind_to_feeder_station: Callable[[], Command] = lambda: InstantCommand()
         self._pathfind_to_processor: Callable[[], Command] = lambda: InstantCommand()
 
-        if PATHFINDING_ENABLED and DRIVETRAIN_ENABLED:
-            from src.FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
-            pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, VisionConstants.APRIL_TAG_FIELD, SwerveConstants.DRIVE_CONTROLLER)
+        #self._drivetrain: DrivetrainSubsystem | None = None
+        if DRIVETRAIN_ENABLED:
+            from src.constants import SwerveConstants
+            from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
+            drivetrain = DrivetrainSubsystem(self._operator_oi, self._vision)
+            if COMMANDS_ENABLED:
+                    from src.commands.teleop.teleop_drive_command import TeleopDriveCommand
+                    self._drive_state_commands.addCommands(
+                        TeleopDriveCommand(drivetrain, self._driver_oi)
+                    )
 
-            # Pre-process april tag poses with offsets
-            from src.constants import PathfindingConstants
-            reef_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
-                pathfinder.get_april_tag_poses(PathfindingConstants.REEF_APRIL_TAG_IDS),
-                (PathfindingConstants.LEFT_REEF_OFFSET, PathfindingConstants.RIGHT_REEF_OFFSET)
-            )
-            feeder_station_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
-                pathfinder.get_april_tag_poses(PathfindingConstants.FEEDER_STATION_APRIL_TAG_IDS),
-                (PathfindingConstants.LEFT_FEEDER_STATION_OFFSET, PathfindingConstants.RIGHT_FEEDER_STATION_OFFSET)
-            )
-            processor_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
-                pathfinder.get_april_tag_poses(PathfindingConstants.PROCESSOR_APRIL_TAG_IDS),
-                (PathfindingConstants.PROCESSOR_OFFSET,)
-            )
-            
-            pathfind_function: Callable[[list[Pose2d]], Command] = lambda poses: pathfinder.get_pathfind_command(
-                            SC_Pathfinding.get_nearest_pose(poses),
-                            PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
-                            defer=False
-                        )
-            # Lambdas for creating paths. These will be called when starting pathfinding commands.
-            self._pathfind_to_reef = lambda poses=reef_poses: pathfind_function(poses)
-            self._pathfind_to_feeder_station = lambda poses=feeder_station_poses: pathfind_function(poses)
-            self._pathfind_to_processor = lambda poses=processor_poses: pathfind_function(poses)
+            if PATHFINDING_ENABLED:
+                from src.FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
+                pathfinder: SC_Pathfinding = SC_Pathfinding(drivetrain, drivetrain.get_pose, VisionConstants.APRIL_TAG_FIELD, SwerveConstants.DRIVE_CONTROLLER)
+
+                # Pre-process april tag poses with offsets
+                from src.constants import PathfindingConstants
+                reef_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
+                    pathfinder.get_april_tag_poses(PathfindingConstants.REEF_APRIL_TAG_IDS),
+                    (PathfindingConstants.LEFT_REEF_OFFSET, PathfindingConstants.RIGHT_REEF_OFFSET)
+                )
+                feeder_station_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
+                    pathfinder.get_april_tag_poses(PathfindingConstants.FEEDER_STATION_APRIL_TAG_IDS),
+                    (PathfindingConstants.LEFT_FEEDER_STATION_OFFSET, PathfindingConstants.RIGHT_FEEDER_STATION_OFFSET)
+                )
+                processor_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
+                    pathfinder.get_april_tag_poses(PathfindingConstants.PROCESSOR_APRIL_TAG_IDS),
+                    (PathfindingConstants.PROCESSOR_OFFSET,)
+                )
+                
+                pathfind_function: Callable[[list[Pose2d]], Command] = lambda poses: pathfinder.get_pathfind_command(
+                                SC_Pathfinding.get_nearest_pose(poses),
+                                PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
+                                defer=False
+                            )
+                # Lambdas for creating paths. These will be called when starting pathfinding commands.
+                self._pathfind_to_reef = lambda poses=reef_poses: pathfind_function(poses)
+                self._pathfind_to_feeder_station = lambda poses=feeder_station_poses: pathfind_function(poses)
+                self._pathfind_to_processor = lambda poses=processor_poses: pathfind_function(poses)
 
     def robotInit(self):
         """
