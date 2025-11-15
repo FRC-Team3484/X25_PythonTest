@@ -32,15 +32,7 @@ class MyRobot(wpilib.TimedRobot):
         # To be populated as subsystems are created
         self._drive_state_commands: Command = ParallelCommandGroup()
 
-        """
-        Subsystems
-        """
-        
-        self._vision: Optional["Vision"] = None
-        if VISION_ENABLED:
-            from src.FRC3484_Lib.vision import Vision
-            self._vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
-
+        # Variable to hold the current pathfinding command
         self._pathfind_command: Command = InstantCommand()
 
         # Placeholder lambdas for path commands to avoid linter errors if pathfinding is disabled
@@ -48,11 +40,20 @@ class MyRobot(wpilib.TimedRobot):
         self._pathfind_to_feeder_station: Callable[[], Command] = lambda: InstantCommand()
         self._pathfind_to_processor: Callable[[], Command] = lambda: InstantCommand()
 
+        """
+        Subsystems
+        """
+        
+        vision: Optional["Vision"] = None # this is how you do type hinting for classes that don't exist yet.  Optional is equivalent to '| None' but works for classes in quotes.
+        if VISION_ENABLED:
+            from src.FRC3484_Lib.vision import Vision
+            vision = Vision(VisionConstants.CAMERA_CONFIGS, VisionConstants.APRIL_TAG_FIELD, VisionConstants.POSE_STRATEGY, VisionConstants.SINGLE_TAG_STDDEV, VisionConstants.MULTI_TAG_STDDEV)
+
         #self._drivetrain: DrivetrainSubsystem | None = None
         if DRIVETRAIN_ENABLED:
             from src.constants import SwerveConstants
             from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
-            drivetrain = DrivetrainSubsystem(self._operator_oi, self._vision)
+            drivetrain = DrivetrainSubsystem(self._operator_oi, vision)
             if COMMANDS_ENABLED:
                     from src.commands.teleop.teleop_drive_command import TeleopDriveCommand
                     self._drive_state_commands.addCommands(
