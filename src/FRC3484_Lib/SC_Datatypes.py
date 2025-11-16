@@ -1,3 +1,4 @@
+from phoenix6.signals import NeutralModeValue
 from wpimath.units import \
     seconds, \
     inches, \
@@ -70,6 +71,9 @@ class SC_MotorConfig:
     current_time: seconds = 0.1
     current_limit: amperes = 20
 
+    starting_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
+    motor_type: str = "falcon" # falcon or minion
+
 '''
 Swerve Drive Datatypes
 '''
@@ -133,3 +137,20 @@ class SC_CameraResults:
     vision_measurement: Pose2d
     timestamp: seconds
     standard_deviation: tuple[float, float, float]
+
+'''
+Motor Template Classes Datatypes
+'''
+
+# TODO: This is just a copy of SC_SwerveCurrentConfig. Since the naming of the existing one is exclusive to swerve, I thought I should make a new one, but maybe we just create a unified one?
+class SC_TemplateMotorCurrentConfig:
+    drive_current_threshold: amperes = 60
+    drive_current_time: seconds = 0.1
+    drive_current_limit: amperes = 35
+    drive_open_loop_ramp: seconds = 0.25
+
+    steer_current_threshold: amperes = 40
+    steer_current_time: seconds = 0.1
+    steer_current_limit: amperes = 25
+
+    current_limit_enabled: bool = True
