@@ -5,7 +5,7 @@ from typing import Callable, Optional
 
 import wpilib
 from wpimath.geometry import Pose2d
-from commands2 import Command, InstantCommand, ParallelCommandGroup
+import commands2
 
 from src.config import *
 from src.constants import VisionConstants
@@ -18,7 +18,7 @@ class DriveState(Enum):
     PATHFIND_FEEDER_STATION = 2
     PATHFIND_PROCESSOR = 3
 
-class MyRobot(wpilib.TimedRobot):
+class MyRobot(commands2.TimedCommandRobot):
     def __init__(self):
         super().__init__()
         self._drive_state: DriveState = DriveState.DRIVE
@@ -30,15 +30,15 @@ class MyRobot(wpilib.TimedRobot):
         Commands
         """
         # To be populated as subsystems are created
-        self._drive_state_commands: Command = ParallelCommandGroup()
+        self._drive_state_commands: commands2.Command = commands2.ParallelCommandGroup()
 
         # Variable to hold the current pathfinding command
-        self._pathfind_command: Command = InstantCommand()
+        self._pathfind_command: commands2.Command = commands2.InstantCommand()
 
         # Placeholder lambdas for path commands to avoid linter errors if pathfinding is disabled
-        self._pathfind_to_reef: Callable[[], Command] = lambda: InstantCommand()
-        self._pathfind_to_feeder_station: Callable[[], Command] = lambda: InstantCommand()
-        self._pathfind_to_processor: Callable[[], Command] = lambda: InstantCommand()
+        self._pathfind_to_reef: Callable[[], commands2.Command] = lambda: commands2.InstantCommand()
+        self._pathfind_to_feeder_station: Callable[[], commands2.Command] = lambda: commands2.InstantCommand()
+        self._pathfind_to_processor: Callable[[], commands2.Command] = lambda: commands2.InstantCommand()
 
         """
         Subsystems
@@ -79,7 +79,7 @@ class MyRobot(wpilib.TimedRobot):
                     (PathfindingConstants.PROCESSOR_OFFSET,)
                 )
                 
-                pathfind_function: Callable[[list[Pose2d]], Command] = lambda poses: pathfinder.get_pathfind_command(
+                pathfind_function: Callable[[list[Pose2d]], commands2.Command] = lambda poses: pathfinder.get_pathfind_command(
                                 pathfinder.get_nearest_pose(poses),
                                 PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
                                 defer=False
