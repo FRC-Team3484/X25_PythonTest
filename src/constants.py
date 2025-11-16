@@ -27,8 +27,8 @@ class SwerveConstants:
     MAX_WHEEL_SPEED: meters_per_second = feetToMeters(8.0) # feet per second
 
     DRIVE_CONTROLLER = PPHolonomicDriveController(
-        PIDConstants(5.0, 0.0, 0.0),
-        PIDConstants(5.0, 0.0, 0.0)
+        PIDConstants(10.0, 0.0, 0.0),
+        PIDConstants(7.0, 0.0, 0.0)
     )
 
     MODULE_POSITIONS: tuple[Translation2d, ...] = (
