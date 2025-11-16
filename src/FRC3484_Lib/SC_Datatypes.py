@@ -71,7 +71,7 @@ class SC_MotorConfig:
     current_time: seconds = 0.1
     current_limit: amperes = 20
 
-    starting_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
+    neutral_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
     motor_type: str = "falcon" # falcon or minion
 
 '''
