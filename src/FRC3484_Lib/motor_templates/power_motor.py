@@ -6,7 +6,8 @@ from src.FRC3484_Lib.SC_Datatypes import SC_TemplateMotorConfig, SC_TemplateMoto
 
 class PowerMotor:
     '''
-    Creates a motor template class that can be used to create a base motor that simply powers forwards or backwards at a given power
+    Creates a motor template class that can be used to create a 
+        base motor that simply powers forwards or backwards at a given power
 
     Parameters:
         - motor_config (SC_MotorConfig): The configuration for the motor
@@ -41,6 +42,8 @@ class PowerMotor:
             .with_supply_current_limit(current_config.drive_current_limit) \
             .with_supply_current_lower_limit(current_config.drive_current_threshold) \
             .with_supply_current_lower_time(current_config.drive_current_time)
+
+        _ = self._motor.configurator.apply(self._motor_config)
 
     def set_power(self, power: float) -> None:
         '''
