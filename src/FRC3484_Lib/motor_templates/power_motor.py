@@ -33,11 +33,7 @@ class PowerMotor:
         else:
             raise ValueError(f"Invalid motor type: {motor_config.motor_type}")
 
-        # TODO: Do these need to be swapped?
-        if motor_config.inverted:
-            self._motor_config.motor_output.inverted = InvertedValue.COUNTER_CLOCKWISE_POSITIVE
-        else:
-            self._motor_config.motor_output.inverted = InvertedValue.CLOCKWISE_POSITIVE
+        self._motor_config.motor_output.inverted = InvertedValue(motor_config.inverted)
 
         self._motor_config.motor_output.neutral_mode = motor_config.neutral_mode
 
