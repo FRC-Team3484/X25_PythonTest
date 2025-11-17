@@ -71,9 +71,6 @@ class SC_MotorConfig:
     current_time: seconds = 0.1
     current_limit: amperes = 20
 
-    neutral_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
-    motor_type: str = "falcon" # falcon or minion
-
 '''
 Swerve Drive Datatypes
 '''
@@ -141,8 +138,21 @@ class SC_CameraResults:
 '''
 Motor Template Classes Datatypes
 '''
+@dataclass(frozen=True)
+class SC_TemplateMotorConfig:
+    can_id: int
+    inverted: bool = False
+    can_bus_name: str = "rio"
+    
+    current_limit_enabled: bool = True
+    current_threshold: amperes = 50
+    current_time: seconds = 0.1
+    current_limit: amperes = 20
 
-# TODO: This is just a copy of SC_SwerveCurrentConfig. Since the naming of the existing one is exclusive to swerve, I thought I should make a new one, but maybe we just create a unified one?
+    neutral_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
+    motor_type: str = "falcon" # falcon or minion
+
+@dataclass(frozen=True)
 class SC_TemplateMotorCurrentConfig:
     drive_current_threshold: amperes = 60
     drive_current_time: seconds = 0.1

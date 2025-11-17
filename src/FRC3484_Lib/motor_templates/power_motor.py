@@ -3,7 +3,7 @@ import phoenix6
 from phoenix6.hardware import TalonFX, TalonFXS
 from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFXSConfiguration
 from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
-from src.FRC3484_Lib.SC_Datatypes import SC_MotorConfig, SC_TemplateMotorCurrentConfig
+from src.FRC3484_Lib.SC_Datatypes import SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig
 
 class PowerMotor:
     '''
@@ -13,7 +13,7 @@ class PowerMotor:
         - motor_config (SC_MotorConfig): The configuration for the motor
         - current_config (SC_TemplateMotorCurrentConfig): Current limit settings for the motor
     '''
-    def __init__(self, motor_config: SC_MotorConfig, current_config: SC_TemplateMotorCurrentConfig) -> None:
+    def __init__(self, motor_config: SC_TemplateMotorConfig, current_config: SC_TemplateMotorCurrentConfig) -> None:
         self._motor: TalonFX | TalonFXS
         self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
 
