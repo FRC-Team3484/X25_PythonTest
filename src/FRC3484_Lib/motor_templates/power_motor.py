@@ -1,8 +1,7 @@
-from operator import inv
-import phoenix6
 from phoenix6.hardware import TalonFX, TalonFXS
 from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFXSConfiguration
 from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
+
 from src.FRC3484_Lib.SC_Datatypes import SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig
 
 class PowerMotor:
@@ -27,7 +26,7 @@ class PowerMotor:
             self._motor_config.commutation.motor_arrangement = MotorArrangementValue.MINION_JST
 
         elif motor_config.motor_type == "falcon":
-            self._motor = phoenix6.hardware.TalonFX(motor_config.can_id, motor_config.can_bus_name)
+            self._motor = TalonFX(motor_config.can_id, motor_config.can_bus_name)
 
             self._motor_config = TalonFXConfiguration()
         else:
