@@ -10,9 +10,11 @@ from wpimath.units import radians_per_second, meters_per_second, degreesToRadian
 from wpimath.kinematics import SwerveDrive4Kinematics, ChassisSpeeds, SwerveModuleState, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Pose2d, Translation2d
+from wpilib.sysid import SysIdRoutineLog
 from wpilib import SmartDashboard, Field2d, DriverStation
 
 from commands2 import Subsystem
+from commands2.sysid import SysIdRoutine
 
 from src.FRC3484_Lib.vision import Vision
 from src.subsystems.swerve_module import SwerveModule
@@ -62,6 +64,80 @@ class DrivetrainSubsystem(Subsystem):
         
         self._target_position: Pose2d = Pose2d()
 
+        # SysId routine for characterizing translation. This is used to find PID gains for the drive motors.
+        self._sys_id_routine_translation: SysIdRoutine = SysIdRoutine(
+            SysIdRoutine.Config(
+                # Use default ramp rate (1 V/s) and timeout (10 s)
+                # Reduce dynamic voltage to 4 V to prevent brownout
+                stepVoltage=4.0,
+                # Log state with SignalLogger class
+                recordState=lambda state: SignalLogger.write_string(
+                    "SysIdTranslation_State", SysIdRoutineLog.stateEnumToString(state)
+                ),
+            ),
+            SysIdRoutine.Mechanism(
+                lambda output: self.set_control(
+                    self._translation_characterization.with_volts(output)
+                ),
+                lambda log: None,
+                self,
+            ),
+        )
+        # SysId routine for characterizing steer. This is used to find PID gains for the steer motors.
+        self._sys_id_routine_steer = SysIdRoutine(
+            SysIdRoutine.Config(
+                # Use default ramp rate (1 V/s) and timeout (10 s)
+                # Use dynamic voltage of 7 V
+                stepVoltage=7.0,
+                # Log state with SignalLogger class
+                recordState=lambda state: SignalLogger.write_string(
+                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
+                ),
+            ),
+            SysIdRoutine.Mechanism(
+                lambda output: self.set_control(
+                    self._steer_characterization.with_volts(output)
+                ),
+                lambda log: None,
+                self,
+            ),
+        )
+
+        self._sys_id_routine_rotation = SysIdRoutine(
+            SysIdRoutine.Config(
+                # This is in radians per second², but SysId only supports "volts per second"
+                rampRate=math.pi / 6,
+                # Use dynamic voltage of 7 V
+                stepVoltage=7.0,
+                # Use default timeout (10 s)
+                # Log state with SignalLogger class
+                recordState=lambda state: SignalLogger.write_string(
+                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
+                ),
+            ),
+            SysIdRoutine.Mechanism(
+                lambda output: (
+                    # output is actually radians per second, but SysId only supports "volts"
+                    self.set_control(
+                        self._rotation_characterization.with_rotational_rate(output)
+                    ),
+                    # also log the requested output for SysId
+                    SignalLogger.write_double("Rotational_Rate", output),
+                ),
+                lambda log: None,
+                self,
+            ),
+        )
+
+        """
+        SysId routine for characterizing rotation.
+        This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
+        See the documentation of swerve.requests.SysIdSwerveRotation for info on importing the log to SysId.
+        """
+
+        self._sys_id_routine_to_apply = self._sys_id_routine_translation
+        """The SysId routine to test"""
+
         self._robot_config = RobotConfig.fromGUISettings()
         if not AutoBuilder.isConfigured():
             AutoBuilder.configure(
@@ -71,7 +147,7 @@ class DrivetrainSubsystem(Subsystem):
                 lambda speeds, _: self.drive_robotcentric(speeds, open_loop=False), # Pathplanner has added a parameter for module feedforwards but doesn't have an example in any language that uses it
                 SwerveConstants.DRIVE_CONTROLLER,
                 self._robot_config,
-                lambda: DriverStation.getAlliance() == DriverStation.Alliance.kRed,
+                lambda: (DriverStation.getAlliance() or DriverStation.Alliance.kBlue) == DriverStation.Alliance.kRed,
                 self
             )
 
