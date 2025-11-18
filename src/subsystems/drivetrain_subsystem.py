@@ -404,7 +404,8 @@ class DrivetrainSubsystem(Subsystem):
             
             log.motor(f'steer {i}') \
                 .voltage(module.get_voltages()['steer']) \
-                .position(module.get_position().angle.radians())
+                .angularPosition(module.get_position().angle.degrees() / 360.0) \
+                .angularVelocity(module.get_steer_velocity())
 
     def sys_id_quasistatic(self, direction: SysIdRoutine.Direction) -> Command:
         '''

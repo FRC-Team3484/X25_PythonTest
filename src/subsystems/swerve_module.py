@@ -7,7 +7,7 @@ from phoenix6.signals import NeutralModeValue, InvertedValue, SensorDirectionVal
 
 from wpimath.trajectory import TrapezoidProfileRadians
 from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians
-from wpimath.units import meters, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations
+from wpimath.units import meters, turns_per_second, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from wpimath.geometry import Rotation2d
 
@@ -185,6 +185,12 @@ class SwerveModule:
         Gets the current angle of the steer encoder as a Rotation2d
         '''
         return Rotation2d(rotationsToRadians(self._steer_encoder.get_absolute_position().value))
+    
+    def get_steer_velocity(self) -> turns_per_second:
+        '''
+        Gets the current velocity of the steer encoder in rotations per second
+        '''
+        return self._steer_encoder.get_velocity().value
 
     def stop_motors(self) -> None:
         '''
