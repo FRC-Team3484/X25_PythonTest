@@ -176,35 +176,38 @@ class MyRobot(commands2.TimedCommandRobot):
                     if self._driver_oi.get_goto_reef():
                         self._pathfind_command = self._pathfind_to_reef()
 
-                        self._cancel_drive_state()
+                        self._cancel_drive_commands()
                         self._start_pathfind_state(DriveState.PATHFIND_REEF)
 
                     elif self._driver_oi.get_goto_feeder_station():
                         self._pathfind_command = self._pathfind_to_feeder_station()
 
-                        self._cancel_drive_state()
+                        self._cancel_drive_commands()
                         self._start_pathfind_state(DriveState.PATHFIND_FEEDER_STATION)
 
                     elif self._driver_oi.get_goto_processor():
                         self._pathfind_command = self._pathfind_to_processor()
 
-                        self._cancel_drive_state()
+                        self._cancel_drive_commands()
                         self._start_pathfind_state(DriveState.PATHFIND_PROCESSOR)
 
             case DriveState.PATHFIND_REEF:
                 if not self._driver_oi.get_goto_reef():
-                    self._cancel_pathfind_state()
+                    self._cancel_drive_commands()
                     self._start_drive_state()
 
             case DriveState.PATHFIND_FEEDER_STATION:
                 if not self._driver_oi.get_goto_feeder_station():
-                    self._cancel_pathfind_state()
+                    self._cancel_drive_commands()
                     self._start_drive_state()
                 
             case DriveState.PATHFIND_PROCESSOR:
                 if not self._driver_oi.get_goto_processor():
-                    self._cancel_pathfind_state()
+                    self._cancel_drive_commands()
                     self._start_drive_state()
+
+    def teleopExit(self) -> None:
+        self._cancel_drive_commands()
 
     def testInit(self):
         """This function is called once each time the robot enters test mode."""
@@ -256,20 +259,15 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def _start_drive_state(self):
         self._drive_state = DriveState.DRIVE
-        self._pathfind_command.cancel()
-        if not self._drive_state_commands.isScheduled():
-            self._drive_state_commands.schedule()
-
-    def _cancel_drive_state(self):
-        if self._drive_state_commands.isScheduled():
-            self._drive_state_commands.cancel()
+        self._cancel_drive_commands()
+        self._drive_state_commands.schedule()
 
     def _start_pathfind_state(self, new_state: DriveState):
         self._drive_state = new_state
-        self._cancel_drive_state()
-        if not self._pathfind_command.isScheduled():
-            self._pathfind_command.schedule()
+        self._cancel_drive_commands()
+        self._pathfind_command.schedule()
 
-    def _cancel_pathfind_state(self):
-        if self._pathfind_command.isScheduled():
-            self._pathfind_command.cancel()
+    def _cancel_drive_commands(self):
+        # Cancel all teleop driving commands
+        self._drive_state_commands.cancel()
+        self._pathfind_command.cancel()
