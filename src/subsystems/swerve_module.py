@@ -7,7 +7,7 @@ from phoenix6.signals import NeutralModeValue, InvertedValue, SensorDirectionVal
 
 from wpimath.trajectory import TrapezoidProfileRadians
 from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians
-from wpimath.units import meters, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations
+from wpimath.units import meters, turns_per_second, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from wpimath.geometry import Rotation2d
 
@@ -103,7 +103,7 @@ class SwerveModule:
                 - False: treat speed as a velocity in meters per second
             - optimize (bool): Whether to optimize the steering angle to minimize rotation
         '''
-        encoder_rotation: Rotation2d = self.get_steer_angle()
+        encoder_rotation: Rotation2d = self._get_steer_angle()
 
         # If the wheel needs to rotate over 90 degrees, rotate the other direction and flip the output
         # This prevents the wheel from ever needing to rotate more than 90 degrees
@@ -119,27 +119,36 @@ class SwerveModule:
         if open_loop:
             self._drive_motor.set(state.speed)
         else:
-            drive_pid: volts = self._drive_pid_controller.calculate(self.get_wheel_speed('meters'), state.speed)
+            drive_pid: volts = self._drive_pid_controller.calculate(self._get_wheel_speed('meters'), state.speed)
             drive_ff: volts = self._drive_feed_forward.calculate(state.speed)
             self._drive_motor.setVoltage(drive_pid + drive_ff)
 
-        steer_pid: float = self._steer_pid_controller.calculate(encoder_rotation.radians(), state.angle.radians())
+        self._set_steer(state.angle)
+    
+    def _set_steer(self, angle: Rotation2d) -> None:
+        '''
+        Sets the steer motor to the specified angle
+
+        Parameters:
+            - angle (Rotation2d): The angle to set the steer motor to
+        '''
+        encoder_rotation: Rotation2d = self._get_steer_angle()
+        steer_pid: float = self._steer_pid_controller.calculate(encoder_rotation.radians(), angle.radians())
         self._steer_motor.set(steer_pid)
 
     def get_state(self) -> SwerveModuleState:
         '''
         Gets the current state of the swerve module
         '''
-        return SwerveModuleState(self.get_wheel_speed('meters'), self.get_steer_angle())
+        return SwerveModuleState(self._get_wheel_speed('meters'), self._get_steer_angle())
 
     def get_position(self) -> SwerveModulePosition:
         '''
         Gets the current position of the swerve module
         '''
-        return SwerveModulePosition(self.get_wheel_speed('meters'), self.get_steer_angle())
+        return SwerveModulePosition(self._get_wheel_speed('meters'), self._get_steer_angle())
     
-    # Private
-    def get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
+    def _get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
         '''
         Gets the current speed of the wheel
 
@@ -154,8 +163,7 @@ class SwerveModule:
             return metersToFeet(speed)
         return speed
 
-    # Private
-    def get_wheel_position(self, distance_units: Literal['inches', 'feet', 'meters']) -> float:
+    def _get_wheel_position(self, distance_units: Literal['inches', 'feet', 'meters']) -> float:
         '''
         Gets the current position of the wheel
 
@@ -172,12 +180,17 @@ class SwerveModule:
             return metersToFeet(position)
         return position
 
-    # Private
-    def get_steer_angle(self) -> Rotation2d:
+    def _get_steer_angle(self) -> Rotation2d:
         '''
         Gets the current angle of the steer encoder as a Rotation2d
         '''
         return Rotation2d(rotationsToRadians(self._steer_encoder.get_absolute_position().value))
+    
+    def get_steer_velocity(self) -> turns_per_second:
+        '''
+        Gets the current velocity of the steer encoder in rotations per second
+        '''
+        return self._steer_encoder.get_velocity().value
 
     def stop_motors(self) -> None:
         '''
@@ -205,3 +218,35 @@ class SwerveModule:
         '''
         self._drive_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
         self._drive_motor.configurator.apply(self._drive_motor_config)
+
+    def set_drive_voltage(self, voltage: volts) -> None:
+        '''
+        Sets the drive motor to the specified voltage
+
+        Used by SysId routines
+
+        Parameters:
+            - voltage (volts): The voltage to set the drive motor to
+        '''
+        self._drive_motor.setVoltage(voltage)
+        self._set_steer(Rotation2d(0)) # Point the wheel forward when using voltage control
+    def set_steer_voltage(self, voltage: volts) -> None:
+        '''
+        Sets the steer motor to the specified voltage
+
+        Used by SysId routines
+
+        Parameters:
+            - voltage (volts): The voltage to set the steer motor to
+        '''
+        self._drive_motor.setVoltage(0) # Stop the drive motor when using voltage control
+        self._steer_motor.setVoltage(voltage)
+
+    def get_voltages(self) -> dict[str, volts]:
+        '''
+        Gets the current voltages of the drive and steer motors
+
+        Returns:
+            A tuple containing the drive motor voltage and steer motor voltage
+        '''
+        return {'drive': self._drive_motor.get_motor_voltage().value, 'steer': self._steer_motor.get_motor_voltage().value}

@@ -1,6 +1,6 @@
 from photonlibpy import PoseStrategy
 from pathplannerlib.controller import PPHolonomicDriveController, PIDConstants
-from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
+from robotpy_apriltag import AprilTagField
 from wpimath.geometry import Translation2d, Translation3d, Rotation2d, Rotation3d, Pose2d
 from wpimath.units import inches, meters_per_second, feetToMeters, inchesToMeters
 
@@ -27,8 +27,8 @@ class SwerveConstants:
     MAX_WHEEL_SPEED: meters_per_second = feetToMeters(8.0) # feet per second
 
     DRIVE_CONTROLLER = PPHolonomicDriveController(
-        PIDConstants(5.0, 0.0, 0.0),
-        PIDConstants(5.0, 0.0, 0.0)
+        PIDConstants(10.0, 0.0, 0.0),
+        PIDConstants(7.0, 0.0, 0.0)
     )
 
     MODULE_POSITIONS: tuple[Translation2d, ...] = (
@@ -65,6 +65,8 @@ class SwerveConstants:
         SC_SteerPIDConfig(0.5, 0.0, 0.0, 12, 100)
         for _ in range(len(MODULE_CONFIGS))
     ])
+
+
 
 class TeleopDriveConstants:
     LOW_SPEED: float = 0.35
@@ -123,6 +125,11 @@ class UserInterface:
         RUMBLE_LOW: float = 0.2
         RUMBLE_OFF: float = 0.0
 
+        QUASI_FWD_BUTTON: Input = ControllerMap.A_BUTTON
+        QUASI_REV_BUTTON: Input = ControllerMap.B_BUTTON
+        DYNAMIC_FWD_BUTTON: Input = ControllerMap.X_BUTTON
+        DYNAMIC_REV_BUTTON: Input = ControllerMap.Y_BUTTON
+
 class VisionConstants:
     APRIL_TAG_FIELD: AprilTagField = AprilTagField.k2025ReefscapeWelded
     POSE_STRATEGY: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR
@@ -130,7 +137,7 @@ class VisionConstants:
     SINGLE_TAG_STDDEV: tuple[float, float, float] = (4, 4, 8)
     MULTI_TAG_STDDEV: tuple[float, float, float] = (0.5, 0.5, 1)
 
-    CAMERA_CONFIGS: tuple[SC_CameraConfig] = (
+    CAMERA_CONFIGS: tuple[SC_CameraConfig, ...] = (
         # Front Left
         SC_CameraConfig(
             "Camera_1",
@@ -158,7 +165,6 @@ class VisionConstants:
             True
         )
     )
-
 
 class PathfindingConstants:
     FINAL_ALIGNMENT_DISTANCE: inches = 6.0
