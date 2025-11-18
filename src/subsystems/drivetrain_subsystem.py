@@ -1,5 +1,4 @@
 import sys
-import math
 
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
@@ -11,10 +10,9 @@ from wpimath.units import radians_per_second, meters_per_second, degreesToRadian
 from wpimath.kinematics import SwerveDrive4Kinematics, ChassisSpeeds, SwerveModuleState, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Pose2d, Translation2d
-from wpilib.sysid import SysIdRoutineLog
 from wpilib import SmartDashboard, Field2d, DriverStation
 
-from commands2 import Subsystem
+from commands2 import Command, Subsystem
 from commands2.sysid import SysIdRoutine
 
 from src.FRC3484_Lib.vision import Vision
@@ -387,3 +385,20 @@ class DrivetrainSubsystem(Subsystem):
         '''
         for module in self._modules:
             module.set_steer_voltage(voltage)
+
+    def sys_id_quasistatic(self, direction: SysIdRoutine.Direction) -> Command:
+        '''
+        Returns the SysId routine command for quasistatic characterization
+
+        Parameters:
+            - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
+        '''
+        return self._sys_id_routine_to_apply.quasistatic(direction)
+    def sys_id_dynamic(self, direction: SysIdRoutine.Direction) -> Command:
+        '''
+        Returns the SysId routine command for dynamic characterization
+
+        Parameters:
+            - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
+        '''
+        return self._sys_id_routine_to_apply.dynamic(direction)
