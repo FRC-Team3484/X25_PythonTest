@@ -45,7 +45,8 @@ class SysIdSubsystem(Enum):
     """
     Enum for selecting which subsystem to run SysId tests on.
     """
-    DRIVETRAIN = 0
+    DRIVETRAIN_DRIVE = 0
+    DRIVETRAIN_STEER = 1
 
 class MyRobot(commands2.TimedCommandRobot):
     def __init__(self):
@@ -130,7 +131,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self._test_mode_chooser: wpilib.SendableChooser = wpilib.SendableChooser()
         self._test_mode: TestMode = TestMode.MOTORS
         self._sysid_subsystem_chooser: wpilib.SendableChooser = wpilib.SendableChooser()
-        self._sysid_subsystem: SysIdSubsystem = SysIdSubsystem.DRIVETRAIN
+        self._sysid_subsystem: SysIdSubsystem = SysIdSubsystem.DRIVETRAIN_DRIVE
         self._sysid_mode: SysIdMode = SysIdMode.NONE
         self._sysid_buttons: dict[SysIdMode, Callable[[], bool]] = {
             SysIdMode.QUASI_STATIC_FORWARD: self._test_oi.get_quasistatic_fwd,
@@ -148,8 +149,9 @@ class MyRobot(commands2.TimedCommandRobot):
         self._test_mode_chooser.addOption("SysId", TestMode.SYSID)
         wpilib.SmartDashboard.putData("Test Mode", self._test_mode_chooser)
 
-        self._sysid_subsystem_chooser.setDefaultOption("Drivetrain", SysIdSubsystem.DRIVETRAIN)
-        wpilib.SmartDashboard.putData("SysId Mode", self._sysid_subsystem_chooser)
+        self._sysid_subsystem_chooser.setDefaultOption("Drivetrain Drive", SysIdSubsystem.DRIVETRAIN_DRIVE)
+        self._sysid_subsystem_chooser.addOption("Drivetrain Steer", SysIdSubsystem.DRIVETRAIN_STEER)
+        wpilib.SmartDashboard.putData("SysId Subsystem", self._sysid_subsystem_chooser)
 
     def robotPeriodic(self):
         """This function is called periodically, no matter the mode."""
@@ -206,19 +208,29 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def testInit(self):
         """This function is called once each time the robot enters test mode."""
+
+        # cast just tells the linter what type something is, it does not actually do anything at runtime
         self._test_mode = cast(TestMode, self._test_mode_chooser.getSelected())
+
         self._sysid_subsystem = cast(SysIdSubsystem, self._sysid_subsystem_chooser.getSelected())
         match self._test_mode:
             case TestMode.MOTORS:
                 pass
             case TestMode.SYSID:
                 match self._sysid_subsystem:
-                    case SysIdSubsystem.DRIVETRAIN:
+                    case SysIdSubsystem.DRIVETRAIN_DRIVE:
                         self._sysid_commands = {
-                            SysIdMode.QUASI_STATIC_FORWARD: self._drivetrain.sys_id_quasistatic(commands2.sysid.SysIdRoutine.Direction.kForward),
-                            SysIdMode.QUASI_STATIC_REVERSE: self._drivetrain.sys_id_quasistatic(commands2.sysid.SysIdRoutine.Direction.kReverse),
-                            SysIdMode.DYNAMIC_FORWARD: self._drivetrain.sys_id_dynamic(commands2.sysid.SysIdRoutine.Direction.kForward),
-                            SysIdMode.DYNAMIC_REVERSE: self._drivetrain.sys_id_dynamic(commands2.sysid.SysIdRoutine.Direction.kReverse)
+                            SysIdMode.QUASI_STATIC_FORWARD: self._drivetrain.get_sysid_command('drive', 'quasistatic', commands2.sysid.SysIdRoutine.Direction.kForward),
+                            SysIdMode.QUASI_STATIC_REVERSE: self._drivetrain.get_sysid_command('drive', 'quasistatic', commands2.sysid.SysIdRoutine.Direction.kReverse),
+                            SysIdMode.DYNAMIC_FORWARD: self._drivetrain.get_sysid_command('drive', 'dynamic', commands2.sysid.SysIdRoutine.Direction.kForward),
+                            SysIdMode.DYNAMIC_REVERSE: self._drivetrain.get_sysid_command('drive', 'dynamic', commands2.sysid.SysIdRoutine.Direction.kReverse)
+                        }
+                    case SysIdSubsystem.DRIVETRAIN_STEER:
+                        self._sysid_commands = {
+                            SysIdMode.QUASI_STATIC_FORWARD: self._drivetrain.get_sysid_command('steer', 'quasistatic', commands2.sysid.SysIdRoutine.Direction.kForward),
+                            SysIdMode.QUASI_STATIC_REVERSE: self._drivetrain.get_sysid_command('steer', 'quasistatic', commands2.sysid.SysIdRoutine.Direction.kReverse),
+                            SysIdMode.DYNAMIC_FORWARD: self._drivetrain.get_sysid_command('steer', 'dynamic', commands2.sysid.SysIdRoutine.Direction.kForward),
+                            SysIdMode.DYNAMIC_REVERSE: self._drivetrain.get_sysid_command('steer', 'dynamic', commands2.sysid.SysIdRoutine.Direction.kReverse)
                         }
         
 

@@ -1,5 +1,5 @@
 import sys
-from typing import cast
+from typing import Literal, cast
 
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
@@ -66,7 +66,7 @@ class DrivetrainSubsystem(Subsystem):
         self._target_position: Pose2d = Pose2d()
 
         # SysId routine for characterizing translation. This is used to find PID gains for the drive motors.
-        self._sys_id_routine_translation: SysIdRoutine = SysIdRoutine(
+        sys_id_routine_translation: SysIdRoutine = SysIdRoutine(
             SysIdRoutine.Config(
                 # Use default ramp rate (1 V/s) and timeout (10 s)
                 # Reduce dynamic voltage to 4 V to prevent brownout
@@ -79,7 +79,7 @@ class DrivetrainSubsystem(Subsystem):
             ),
         )
         # SysId routine for characterizing steer. This is used to find PID gains for the steer motors.
-        self._sys_id_routine_steer = SysIdRoutine(
+        sys_id_routine_steer = SysIdRoutine(
             SysIdRoutine.Config(
                 # Use default ramp rate (1 V/s) and timeout (10 s)
                 # Use dynamic voltage of 7 V
@@ -92,10 +92,10 @@ class DrivetrainSubsystem(Subsystem):
             ),
         )
 
-        self._sys_id_chooser = SendableChooser()
-        self._sys_id_chooser.setDefaultOption('Translation', self._sys_id_routine_translation)
-        self._sys_id_chooser.addOption('Steer', self._sys_id_routine_steer)
-        SmartDashboard.putData('Drivetrain SysId Routine', self._sys_id_chooser)
+        self._sysid_routines: dict[str, SysIdRoutine] = {
+            'drive': sys_id_routine_translation,
+            'steer': sys_id_routine_steer
+        }
 
         self._robot_config = RobotConfig.fromGUISettings()
         if not AutoBuilder.isConfigured():
@@ -408,23 +408,21 @@ class DrivetrainSubsystem(Subsystem):
                 .angularPosition(module.get_position().angle.degrees() / 360.0) \
                 .angularVelocity(module.get_steer_velocity())
 
-    def sys_id_quasistatic(self, direction: SysIdRoutine.Direction) -> Command:
+    def get_sysid_command(self, motor: Literal['drive', 'steer'], mode: Literal['quasistatic', 'dynamic'], direction: SysIdRoutine.Direction) -> Command:
         '''
-        Returns the SysId routine command for quasistatic characterization
+        Returns the SysId routine command for the specified motor and mode
 
         Parameters:
+            - motor (Literal['drive', 'steer']): The motor to characterize
+            - mode (Literal['quasistatic', 'dynamic']): The characterization mode
             - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
         '''
-        # Cast tells the linter what type to expect from getSelected() instead of Any
-        # It has no effect at runtime
-        return cast(SysIdRoutine, self._sys_id_chooser.getSelected()).quasistatic(direction)
-    def sys_id_dynamic(self, direction: SysIdRoutine.Direction) -> Command:
-        '''
-        Returns the SysId routine command for dynamic characterization
+        if motor not in self._sysid_routines:
+            raise ValueError(f'Invalid motor for SysId: {motor}')
 
-        Parameters:
-            - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
-        '''
-        # Cast tells the linter what type to expect from getSelected() instead of Any
-        # It has no effect at runtime
-        return cast(SysIdRoutine, self._sys_id_chooser.getSelected()).dynamic(direction)
+        if mode == 'quasistatic':
+            return self._sysid_routines[motor].quasistatic(direction)
+        elif mode == 'dynamic':
+            return self._sysid_routines[motor].dynamic(direction)
+        else:
+            raise ValueError(f'Invalid mode for SysId: {mode}')
