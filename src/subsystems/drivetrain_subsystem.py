@@ -95,6 +95,7 @@ class DrivetrainSubsystem(Subsystem):
         self._sys_id_chooser = SendableChooser()
         self._sys_id_chooser.setDefaultOption('Translation', self._sys_id_routine_translation)
         self._sys_id_chooser.addOption('Steer', self._sys_id_routine_steer)
+        SmartDashboard.putData('Drivetrain SysId Routine', self._sys_id_chooser)
 
         self._robot_config = RobotConfig.fromGUISettings()
         if not AutoBuilder.isConfigured():
