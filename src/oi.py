@@ -79,3 +79,12 @@ class TestInterface:
         _TEST_INPUTS.TRIGGER_LIMIT,
         _TEST_INPUTS.JOYSTICK_DEADBAND
     )
+
+    def get_quasistatic_fwd(self) -> bool:
+        return self._controller.get_button(_TEST_INPUTS.QUASI_FWD_BUTTON)
+    def get_quasistatic_rev(self) -> bool:
+        return self._controller.get_button(_TEST_INPUTS.QUASI_REV_BUTTON)
+    def get_dynamic_fwd(self) -> bool:
+        return self._controller.get_button(_TEST_INPUTS.DYNAMIC_FWD_BUTTON)
+    def get_dynamic_rev(self) -> bool:
+        return self._controller.get_button(_TEST_INPUTS.DYNAMIC_REV_BUTTON)

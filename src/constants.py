@@ -125,6 +125,11 @@ class UserInterface:
         RUMBLE_LOW: float = 0.2
         RUMBLE_OFF: float = 0.0
 
+        QUASI_FWD_BUTTON: Input = ControllerMap.A_BUTTON
+        QUASI_REV_BUTTON: Input = ControllerMap.B_BUTTON
+        DYNAMIC_FWD_BUTTON: Input = ControllerMap.X_BUTTON
+        DYNAMIC_REV_BUTTON: Input = ControllerMap.Y_BUTTON
+
 class VisionConstants:
     APRIL_TAG_FIELD: AprilTagField = AprilTagField.k2025ReefscapeWelded
     POSE_STRATEGY: PoseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR
@@ -132,7 +137,7 @@ class VisionConstants:
     SINGLE_TAG_STDDEV: tuple[float, float, float] = (4, 4, 8)
     MULTI_TAG_STDDEV: tuple[float, float, float] = (0.5, 0.5, 1)
 
-    CAMERA_CONFIGS: tuple[SC_CameraConfig] = (
+    CAMERA_CONFIGS: tuple[SC_CameraConfig, ...] = (
         # Front Left
         SC_CameraConfig(
             "Camera_1",
@@ -160,7 +165,6 @@ class VisionConstants:
             True
         )
     )
-
 
 class PathfindingConstants:
     FINAL_ALIGNMENT_DISTANCE: inches = 6.0
