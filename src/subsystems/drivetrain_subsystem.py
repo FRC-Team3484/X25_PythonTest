@@ -1,4 +1,5 @@
 import sys
+from typing import cast
 
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
@@ -412,7 +413,9 @@ class DrivetrainSubsystem(Subsystem):
         Parameters:
             - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
         '''
-        return self._sys_id_chooser.getSelected().quasistatic(direction)
+        # Cast tells the linter what type to expect from getSelected() instead of Any
+        # It has no effect at runtime
+        return cast(SysIdRoutine, self._sys_id_chooser.getSelected()).quasistatic(direction)
     def sys_id_dynamic(self, direction: SysIdRoutine.Direction) -> Command:
         '''
         Returns the SysId routine command for dynamic characterization
@@ -420,4 +423,6 @@ class DrivetrainSubsystem(Subsystem):
         Parameters:
             - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
         '''
-        return self._sys_id_chooser.getSelected().dynamic(direction)
+        # Cast tells the linter what type to expect from getSelected() instead of Any
+        # It has no effect at runtime
+        return cast(SysIdRoutine, self._sys_id_chooser.getSelected()).dynamic(direction)
