@@ -1,4 +1,5 @@
 import sys
+import math
 
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
@@ -6,7 +7,7 @@ from phoenix6.configs import Pigeon2Configuration
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import RobotConfig
 
-from wpimath.units import radians_per_second, meters_per_second, degreesToRadians
+from wpimath.units import radians_per_second, meters_per_second, degreesToRadians, volts
 from wpimath.kinematics import SwerveDrive4Kinematics, ChassisSpeeds, SwerveModuleState, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Pose2d, Translation2d
@@ -69,17 +70,11 @@ class DrivetrainSubsystem(Subsystem):
             SysIdRoutine.Config(
                 # Use default ramp rate (1 V/s) and timeout (10 s)
                 # Reduce dynamic voltage to 4 V to prevent brownout
-                stepVoltage=4.0,
-                # Log state with SignalLogger class
-                recordState=lambda state: SignalLogger.write_string(
-                    "SysIdTranslation_State", SysIdRoutineLog.stateEnumToString(state)
-                ),
+                stepVoltage=4.0
             ),
             SysIdRoutine.Mechanism(
-                lambda output: self.set_control(
-                    self._translation_characterization.with_volts(output)
-                ),
-                lambda log: None,
+                lambda voltage: self._drive_volts(voltage),
+                lambda _: None,
                 self,
             ),
         )
@@ -88,52 +83,14 @@ class DrivetrainSubsystem(Subsystem):
             SysIdRoutine.Config(
                 # Use default ramp rate (1 V/s) and timeout (10 s)
                 # Use dynamic voltage of 7 V
-                stepVoltage=7.0,
-                # Log state with SignalLogger class
-                recordState=lambda state: SignalLogger.write_string(
-                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
-                ),
+                stepVoltage=7.0
             ),
             SysIdRoutine.Mechanism(
-                lambda output: self.set_control(
-                    self._steer_characterization.with_volts(output)
-                ),
-                lambda log: None,
+                lambda voltage: self._steer_volts(voltage),
+                lambda _: None,
                 self,
             ),
         )
-
-        self._sys_id_routine_rotation = SysIdRoutine(
-            SysIdRoutine.Config(
-                # This is in radians per second², but SysId only supports "volts per second"
-                rampRate=math.pi / 6,
-                # Use dynamic voltage of 7 V
-                stepVoltage=7.0,
-                # Use default timeout (10 s)
-                # Log state with SignalLogger class
-                recordState=lambda state: SignalLogger.write_string(
-                    "SysIdSteer_State", SysIdRoutineLog.stateEnumToString(state)
-                ),
-            ),
-            SysIdRoutine.Mechanism(
-                lambda output: (
-                    # output is actually radians per second, but SysId only supports "volts"
-                    self.set_control(
-                        self._rotation_characterization.with_rotational_rate(output)
-                    ),
-                    # also log the requested output for SysId
-                    SignalLogger.write_double("Rotational_Rate", output),
-                ),
-                lambda log: None,
-                self,
-            ),
-        )
-
-        """
-        SysId routine for characterizing rotation.
-        This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
-        See the documentation of swerve.requests.SysIdSwerveRotation for info on importing the log to SysId.
-        """
 
         self._sys_id_routine_to_apply = self._sys_id_routine_translation
         """The SysId routine to test"""
@@ -407,3 +364,26 @@ class DrivetrainSubsystem(Subsystem):
         else:
             print(message)
             raise error
+        
+    def _drive_volts(self, voltage: volts) -> None:
+        '''
+        Drives the robot forward at a specified voltage
+
+        Used by SysId routines
+
+        Parameters:
+            - voltage (volts): The voltage to apply to the drive motors
+        '''
+        for module in self._modules:
+            module.set_drive_voltage(voltage)
+    def _steer_volts(self, voltage: volts) -> None:
+        '''
+        Sets all modules to face forward at a specified voltage
+
+        Used by SysId routines
+
+        Parameters:
+            - voltage (volts): The voltage to apply to the steer motors
+        '''
+        for module in self._modules:
+            module.set_steer_voltage(voltage)

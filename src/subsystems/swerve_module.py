@@ -123,7 +123,17 @@ class SwerveModule:
             drive_ff: volts = self._drive_feed_forward.calculate(state.speed)
             self._drive_motor.setVoltage(drive_pid + drive_ff)
 
-        steer_pid: float = self._steer_pid_controller.calculate(encoder_rotation.radians(), state.angle.radians())
+        self._set_steer(state.angle)
+    
+    def _set_steer(self, angle: Rotation2d) -> None:
+        '''
+        Sets the steer motor to the specified angle
+
+        Parameters:
+            - angle (Rotation2d): The angle to set the steer motor to
+        '''
+        encoder_rotation: Rotation2d = self.get_steer_angle()
+        steer_pid: float = self._steer_pid_controller.calculate(encoder_rotation.radians(), angle.radians())
         self._steer_motor.set(steer_pid)
 
     def get_state(self) -> SwerveModuleState:
@@ -205,3 +215,26 @@ class SwerveModule:
         '''
         self._drive_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
         self._drive_motor.configurator.apply(self._drive_motor_config)
+
+    def set_drive_voltage(self, voltage: volts) -> None:
+        '''
+        Sets the drive motor to the specified voltage
+
+        Used by SysId routines
+
+        Parameters:
+            - voltage (volts): The voltage to set the drive motor to
+        '''
+        self._drive_motor.setVoltage(voltage)
+        self._set_steer(Rotation2d(0)) # Point the wheel forward when using voltage control
+    def set_steer_voltage(self, voltage: volts) -> None:
+        '''
+        Sets the steer motor to the specified voltage
+
+        Used by SysId routines
+
+        Parameters:
+            - voltage (volts): The voltage to set the steer motor to
+        '''
+        self._drive_motor.setVoltage(0) # Stop the drive motor when using voltage control
+        self._steer_motor.setVoltage(voltage)
