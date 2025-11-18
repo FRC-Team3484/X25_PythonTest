@@ -103,7 +103,7 @@ class SwerveModule:
                 - False: treat speed as a velocity in meters per second
             - optimize (bool): Whether to optimize the steering angle to minimize rotation
         '''
-        encoder_rotation: Rotation2d = self.get_steer_angle()
+        encoder_rotation: Rotation2d = self._get_steer_angle()
 
         # If the wheel needs to rotate over 90 degrees, rotate the other direction and flip the output
         # This prevents the wheel from ever needing to rotate more than 90 degrees
@@ -119,7 +119,7 @@ class SwerveModule:
         if open_loop:
             self._drive_motor.set(state.speed)
         else:
-            drive_pid: volts = self._drive_pid_controller.calculate(self.get_wheel_speed('meters'), state.speed)
+            drive_pid: volts = self._drive_pid_controller.calculate(self._get_wheel_speed('meters'), state.speed)
             drive_ff: volts = self._drive_feed_forward.calculate(state.speed)
             self._drive_motor.setVoltage(drive_pid + drive_ff)
 
@@ -132,7 +132,7 @@ class SwerveModule:
         Parameters:
             - angle (Rotation2d): The angle to set the steer motor to
         '''
-        encoder_rotation: Rotation2d = self.get_steer_angle()
+        encoder_rotation: Rotation2d = self._get_steer_angle()
         steer_pid: float = self._steer_pid_controller.calculate(encoder_rotation.radians(), angle.radians())
         self._steer_motor.set(steer_pid)
 
@@ -140,16 +140,15 @@ class SwerveModule:
         '''
         Gets the current state of the swerve module
         '''
-        return SwerveModuleState(self.get_wheel_speed('meters'), self.get_steer_angle())
+        return SwerveModuleState(self._get_wheel_speed('meters'), self._get_steer_angle())
 
     def get_position(self) -> SwerveModulePosition:
         '''
         Gets the current position of the swerve module
         '''
-        return SwerveModulePosition(self.get_wheel_speed('meters'), self.get_steer_angle())
+        return SwerveModulePosition(self._get_wheel_speed('meters'), self._get_steer_angle())
     
-    # Private
-    def get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
+    def _get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
         '''
         Gets the current speed of the wheel
 
@@ -164,8 +163,7 @@ class SwerveModule:
             return metersToFeet(speed)
         return speed
 
-    # Private
-    def get_wheel_position(self, distance_units: Literal['inches', 'feet', 'meters']) -> float:
+    def _get_wheel_position(self, distance_units: Literal['inches', 'feet', 'meters']) -> float:
         '''
         Gets the current position of the wheel
 
@@ -182,8 +180,7 @@ class SwerveModule:
             return metersToFeet(position)
         return position
 
-    # Private
-    def get_steer_angle(self) -> Rotation2d:
+    def _get_steer_angle(self) -> Rotation2d:
         '''
         Gets the current angle of the steer encoder as a Rotation2d
         '''
