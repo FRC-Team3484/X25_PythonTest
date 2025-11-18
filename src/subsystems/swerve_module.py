@@ -238,3 +238,12 @@ class SwerveModule:
         '''
         self._drive_motor.setVoltage(0) # Stop the drive motor when using voltage control
         self._steer_motor.setVoltage(voltage)
+
+    def get_voltages(self) -> dict[str, volts]:
+        '''
+        Gets the current voltages of the drive and steer motors
+
+        Returns:
+            A tuple containing the drive motor voltage and steer motor voltage
+        '''
+        return {'drive': self._drive_motor.get_motor_voltage().value, 'steer': self._steer_motor.get_motor_voltage().value}

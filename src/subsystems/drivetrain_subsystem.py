@@ -10,7 +10,8 @@ from wpimath.units import radians_per_second, meters_per_second, degreesToRadian
 from wpimath.kinematics import SwerveDrive4Kinematics, ChassisSpeeds, SwerveModuleState, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Pose2d, Translation2d
-from wpilib import SmartDashboard, Field2d, DriverStation
+from wpilib import SmartDashboard, Field2d, DriverStation, SendableChooser
+from wpilib.sysid import SysIdRoutineLog
 
 from commands2 import Command, Subsystem
 from commands2.sysid import SysIdRoutine
@@ -72,7 +73,7 @@ class DrivetrainSubsystem(Subsystem):
             ),
             SysIdRoutine.Mechanism(
                 lambda voltage: self._drive_volts(voltage),
-                lambda _: None,
+                lambda log: None,
                 self,
             ),
         )
@@ -90,8 +91,9 @@ class DrivetrainSubsystem(Subsystem):
             ),
         )
 
-        self._sys_id_routine_to_apply = self._sys_id_routine_translation
-        """The SysId routine to test"""
+        self._sys_id_chooser = SendableChooser()
+        self._sys_id_chooser.setDefaultOption('Translation', self._sys_id_routine_translation)
+        self._sys_id_chooser.addOption('Steer', self._sys_id_routine_steer)
 
         self._robot_config = RobotConfig.fromGUISettings()
         if not AutoBuilder.isConfigured():
@@ -386,6 +388,23 @@ class DrivetrainSubsystem(Subsystem):
         for module in self._modules:
             module.set_steer_voltage(voltage)
 
+    def _log_motors(self, log: SysIdRoutineLog) -> None:
+        '''
+        Logs the motor outputs for SysId routines
+
+        Parameters:
+            - log (SysIdRoutineLog): The log to write to
+        '''
+        for i, module in enumerate(self._modules):
+            log.motor(f'drive {i}') \
+                .voltage(module.get_voltages()['drive']) \
+                .position(module.get_position().distance) \
+                .velocity(module.get_state().speed)
+            
+            log.motor(f'steer {i}') \
+                .voltage(module.get_voltages()['steer']) \
+                .position(module.get_position().angle.radians())
+
     def sys_id_quasistatic(self, direction: SysIdRoutine.Direction) -> Command:
         '''
         Returns the SysId routine command for quasistatic characterization
@@ -393,7 +412,7 @@ class DrivetrainSubsystem(Subsystem):
         Parameters:
             - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
         '''
-        return self._sys_id_routine_to_apply.quasistatic(direction)
+        return self._sys_id_chooser.getSelected().quasistatic(direction)
     def sys_id_dynamic(self, direction: SysIdRoutine.Direction) -> Command:
         '''
         Returns the SysId routine command for dynamic characterization
@@ -401,4 +420,4 @@ class DrivetrainSubsystem(Subsystem):
         Parameters:
             - direction (SysIdRoutine.Direction): The direction to characterize (translation or steer)
         '''
-        return self._sys_id_routine_to_apply.dynamic(direction)
+        return self._sys_id_chooser.getSelected().dynamic(direction)
