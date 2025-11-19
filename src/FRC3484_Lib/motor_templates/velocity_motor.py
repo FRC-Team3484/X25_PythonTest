@@ -2,8 +2,7 @@ from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFX
 from phoenix6.hardware import TalonFX, TalonFXS
 from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
 from wpimath.controller import PIDController
-from wpimath.units import revolutions_per_minute
-from FRC3484_Lib.SC_Datatypes import SC_MotorConfig, SC_PIDConfig, SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig
+from FRC3484_Lib.SC_Datatypes import SC_PIDConfig, SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig, SC_TemplateMotorVelocityControl
 
 
 class VelocityMotor:
@@ -29,7 +28,7 @@ class VelocityMotor:
         self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
         self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
 
-        self._target_speed: revolutions_per_minute = 0.0
+        self._target_speed: SC_TemplateMotorVelocityControl = SC_TemplateMotorVelocityControl(0.0, 0.0)
 
         self._tolerance: float = tolerance
         self._gear_ratio: float = gear_ratio
@@ -62,14 +61,14 @@ class VelocityMotor:
 
         _ = self._motor.configurator.apply(self._motor_config)
     
-    def set_speed(self, speed: revolutions_per_minute) -> None:
+    def set_speed(self, speed: SC_TemplateMotorVelocityControl) -> None:
         '''
         Sets the target speed for the motor
 
         Parameters:
-            - speed (revolutions_per_minute): The speed to set the motor to in RPMs
+            - speed (SC_TemplateMotorVelocityControl): The speed and power to set the motor to
         '''
-        self._target_speed = speed * self._gear_ratio
+        self._target_speed = SC_TemplateMotorVelocityControl(speed.speed * self._gear_ratio, speed.power)
 
     def at_target_speed(self) -> bool:
         '''
@@ -107,6 +106,6 @@ class VelocityMotor:
             - power (float): The power to set the motor to
         '''
         # TODO: Have a boolean for testing mode to disable PID and feed forward
-        self._motor.set(power)
+        self._target_speed = SC_TemplateMotorVelocityControl(0.0, power)
 
     

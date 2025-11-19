@@ -164,3 +164,8 @@ class SC_TemplateMotorCurrentConfig:
     steer_current_limit: amperes = 25
 
     current_limit_enabled: bool = True
+
+@dataclass(frozen=True)
+class SC_TemplateMotorVelocityControl:
+    power: float
+    speed: revolutions_per_minute
