@@ -140,6 +140,7 @@ Motor Template Classes Datatypes
 '''
 @dataclass(frozen=True)
 class SC_TemplateMotorConfig:
+    motor_name: str = "Motor" # Should be changed. Used for Smart Dashboard diagnostics
     can_id: int
     inverted: bool = False
     can_bus_name: str = "rio"

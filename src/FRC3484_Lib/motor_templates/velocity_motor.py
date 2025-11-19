@@ -1,11 +1,17 @@
+from typing import override
+
+from wpilib import SmartDashboard
+from commands2.subsystem import Subsystem
+
 from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFXSConfiguration
 from phoenix6.hardware import TalonFX, TalonFXS
 from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
-from wpimath.controller import PIDController
+from phoenix6.controls import DutyCycleOut, VelocityVoltage
+
 from FRC3484_Lib.SC_Datatypes import SC_PIDConfig, SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig, SC_TemplateMotorVelocityControl
 
 
-class VelocityMotor:
+class VelocityMotor(Subsystem):
     '''
     Creates a motor template class that represents a motor that can be set to a target speed
 
@@ -24,14 +30,16 @@ class VelocityMotor:
         gear_ratio: float, 
         tolerance: float
     ) -> None:
-        self.motor: TalonFX | TalonFXS
+        super().__init__()
+
+        self._motor: TalonFX | TalonFXS
         self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
-        self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
 
         self._target_speed: SC_TemplateMotorVelocityControl = SC_TemplateMotorVelocityControl(0.0, 0.0)
 
         self._tolerance: float = tolerance
         self._gear_ratio: float = gear_ratio
+        self._motor_name: str = motor_config.motor_name
 
         # If the motor_type is minion, it needs a talon FXS controller to be able to set the correct commutation
         # There is no communtation for the falcon, so use a talon FX controller instead
@@ -59,7 +67,33 @@ class VelocityMotor:
             .with_supply_current_lower_limit(current_config.drive_current_threshold) \
             .with_supply_current_lower_time(current_config.drive_current_time)
 
+        # TODO: The CTRE examples set Ks, Kv, and Kp, but not Ki or Kd. Do we need to specify more in SC_PIDConfig?
+        _ = self._motor_config.slot0 \
+            .with_k_p(pid_config.Kp) \
+            .with_k_i(pid_config.Ki) \
+            .with_k_d(pid_config.Kd)
+
         _ = self._motor.configurator.apply(self._motor_config)
+
+    @override
+    def periodic(self) -> None:
+        '''
+        Handles Smart Dashboard diagnostic information and actually controlling the motors
+        '''
+        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
+            _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())
+
+        if not SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+            if self._target_speed.power == 0.0 and self._target_speed.speed == 0.0:
+                _ = self._motor.set_control(DutyCycleOut(0))
+
+            elif self._target_speed.power != 0.0:
+                _ = self._motor.set_control(DutyCycleOut(self._target_speed.power))
+            
+            else:
+                _ = self._motor.set_control(VelocityVoltage(self._target_speed.speed))
+        
     
     def set_speed(self, speed: SC_TemplateMotorVelocityControl) -> None:
         '''
@@ -77,12 +111,14 @@ class VelocityMotor:
         Returns:
             - bool: True if the motor is at the target speed, False otherwise
         '''
-        if self._target_speed == 0.0:
+        if self._target_speed.power == 0.0 and self._target_speed.speed == 0.0:
             return True
 
-        # TODO: Is this correct? I wasn't quite sure how this function worked on Agent Smith
+        elif self._target_speed.power != 0.0:
+            return (self._motor.get() - self._target_speed.speed) * (1 if self._target_speed.speed >= 0 else -1) > 0
+
         # Convert RPS to RPM, then subtract the target speed and compare to the tolerance
-        return abs((self._motor.get_velocity().value * 60) - self._target_speed) < self._tolerance
+        return abs((self._motor.get_velocity().value * 60) - self._target_speed.speed) < self._tolerance
 
     def set_brake_mode(self) -> None:
         '''
