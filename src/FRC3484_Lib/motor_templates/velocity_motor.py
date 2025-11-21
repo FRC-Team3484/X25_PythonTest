@@ -7,8 +7,10 @@ from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFX
 from phoenix6.hardware import TalonFX, TalonFXS
 from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
 from phoenix6.controls import DutyCycleOut, VelocityVoltage
+from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
+from wpimath.units import volts
 
-from FRC3484_Lib.SC_Datatypes import SC_PIDConfig, SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig, SC_TemplateMotorVelocityControl
+from FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig, SC_TemplateMotorVelocityControl
 
 
 class VelocityMotor(Subsystem):
@@ -27,6 +29,7 @@ class VelocityMotor(Subsystem):
         motor_config: SC_TemplateMotorConfig, 
         current_config: SC_TemplateMotorCurrentConfig, 
         pid_config: SC_PIDConfig, 
+        feed_forward_config: SC_LinearFeedForwardConfig,
         gear_ratio: float, 
         tolerance: float
     ) -> None:
@@ -34,6 +37,8 @@ class VelocityMotor(Subsystem):
 
         self._motor: TalonFX | TalonFXS
         self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
+        self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
+        self._feed_forward_controller: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(feed_forward_config.S, feed_forward_config.V, feed_forward_config.A)
 
         self._target_speed: SC_TemplateMotorVelocityControl = SC_TemplateMotorVelocityControl(0.0, 0.0)
 
@@ -67,12 +72,6 @@ class VelocityMotor(Subsystem):
             .with_supply_current_lower_limit(current_config.drive_current_threshold) \
             .with_supply_current_lower_time(current_config.drive_current_time)
 
-        # TODO: The CTRE examples set Ks, Kv, and Kp, but not Ki or Kd. Do we need to specify more in SC_PIDConfig?
-        _ = self._motor_config.slot0 \
-            .with_k_p(pid_config.Kp) \
-            .with_k_i(pid_config.Ki) \
-            .with_k_d(pid_config.Kd)
-
         _ = self._motor.configurator.apply(self._motor_config)
 
     @override
@@ -86,13 +85,16 @@ class VelocityMotor(Subsystem):
 
         if not SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
             if self._target_speed.power == 0.0 and self._target_speed.speed == 0.0:
-                _ = self._motor.set_control(DutyCycleOut(0))
+                self._pid_controller.reset(0)
+                self._motor.setVoltage(0)
 
             elif self._target_speed.power != 0.0:
-                _ = self._motor.set_control(DutyCycleOut(self._target_speed.power))
+                self._motor.set(self._target_speed.power)
             
             else:
-                _ = self._motor.set_control(VelocityVoltage(self._target_speed.speed))
+                pid: volts = self._pid_controller.calculate(self._motor.get_velocity().value, self._target_speed.speed)
+                feed_forward: volts = self._feed_forward_controller.calculate(self._motor.get_velocity().value, self._target_speed.speed)
+                self._motor.setVoltage(pid + feed_forward)
         
     
     def set_speed(self, speed: SC_TemplateMotorVelocityControl) -> None:
