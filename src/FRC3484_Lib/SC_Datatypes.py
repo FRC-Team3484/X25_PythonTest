@@ -1,3 +1,5 @@
+from phoenix6.signals import NeutralModeValue
+from phoenix6.units import degree
 from wpimath.units import \
     seconds, \
     inches, \
@@ -10,7 +12,11 @@ from wpimath.units import \
     volt_seconds_per_meter, \
     volt_seconds_squared_per_meter, \
     volt_seconds_per_radian, \
-    volt_seconds_squared_per_radian
+    volt_seconds_squared_per_radian, \
+    feet_per_second_squared, \
+    feet_per_second, \
+    degrees_per_second, \
+    degrees_per_second_squared
 
 from wpilib import PneumaticsModuleType
 from wpimath.geometry import Transform3d, Pose2d
@@ -133,3 +139,50 @@ class SC_CameraResults:
     vision_measurement: Pose2d
     timestamp: seconds
     standard_deviation: tuple[float, float, float]
+
+'''
+Motor Template Classes Datatypes
+'''
+@dataclass(frozen=True)
+class SC_TemplateMotorConfig:
+    motor_name: str = "Motor" # Should be changed. Used for Smart Dashboard diagnostics
+    can_id: int
+    inverted: bool = False
+    can_bus_name: str = "rio"
+    
+    current_limit_enabled: bool = True
+    current_threshold: amperes = 50
+    current_time: seconds = 0.1
+    current_limit: amperes = 20
+    stall_limit: float = 0.75
+
+    neutral_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
+    motor_type: str = "falcon" # falcon or minion
+
+@dataclass(frozen=True)
+class SC_TemplateMotorCurrentConfig:
+    drive_current_threshold: amperes = 60
+    drive_current_time: seconds = 0.1
+    drive_current_limit: amperes = 35
+    drive_open_loop_ramp: seconds = 0.25
+
+    steer_current_threshold: amperes = 40
+    steer_current_time: seconds = 0.1
+    steer_current_limit: amperes = 25
+
+    current_limit_enabled: bool = True
+
+@dataclass(frozen=True)
+class SC_TemplateMotorVelocityControl:
+    power: float
+    speed: revolutions_per_minute
+
+@dataclass
+class SC_TemplateMotorPositionControl:
+    position: float
+    speed: float
+
+@dataclass(frozen=True)
+class SC_TemplateMotorTrapezoidConfig:
+    max_velocity: feet_per_second | degrees_per_second
+    max_acceleration: feet_per_second_squared | degrees_per_second_squared

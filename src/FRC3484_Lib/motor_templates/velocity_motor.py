@@ -1,0 +1,182 @@
+from typing import override
+
+from wpilib import SmartDashboard
+from commands2.subsystem import Subsystem
+
+from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFXSConfiguration
+from phoenix6.hardware import TalonFX, TalonFXS
+from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
+from phoenix6.controls import DutyCycleOut, VelocityVoltage
+from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
+from wpimath.units import volts
+
+from FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig, SC_TemplateMotorVelocityControl
+
+
+class VelocityMotor(Subsystem):
+    '''
+    Creates a motor template class that represents a motor that can be set to a target speed
+
+    Parameters:
+        - motor_config (SC_MotorConfig): The configuration for the motor
+        - current_config (SC_TemplateMotorCurrentConfig): Current limit settings for the motor
+        - pid_config (SC_PIDConfig): The configuration for the PID controller
+        - gear_ratio (float): The gear ratio of the motor
+        - tolerance (float): The tolerance for the target speed to consider it reached
+    '''
+    def __init__(
+        self, 
+        motor_config: SC_TemplateMotorConfig, 
+        current_config: SC_TemplateMotorCurrentConfig, 
+        pid_config: SC_PIDConfig, 
+        feed_forward_config: SC_LinearFeedForwardConfig,
+        gear_ratio: float, 
+        tolerance: float
+    ) -> None:
+        super().__init__()
+
+        self._motor: TalonFX | TalonFXS
+        self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
+        self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
+        self._feed_forward_controller: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(feed_forward_config.S, feed_forward_config.V, feed_forward_config.A)
+
+        self._target_speed: SC_TemplateMotorVelocityControl = SC_TemplateMotorVelocityControl(0.0, 0.0)
+
+        self._tolerance: float = tolerance
+        self._gear_ratio: float = gear_ratio
+        self._motor_name: str = motor_config.motor_name
+        self.stall_limit: float = motor_config.stall_limit
+
+        # If the motor_type is minion, it needs a talon FXS controller to be able to set the correct commutation
+        # There is no communtation for the falcon, so use a talon FX controller instead
+        if motor_config.motor_type == "minion":
+            self._motor = TalonFXS(motor_config.can_id, motor_config.can_bus_name)
+
+            self._motor_config = TalonFXSConfiguration()
+
+            self._motor_config.commutation.motor_arrangement = MotorArrangementValue.MINION_JST
+
+        elif motor_config.motor_type == "falcon":
+            self._motor = TalonFX(motor_config.can_id, motor_config.can_bus_name)
+
+            self._motor_config = TalonFXConfiguration()
+        else:
+            raise ValueError(f"Invalid motor type: {motor_config.motor_type}")
+
+        self._motor_config.motor_output.inverted = InvertedValue(motor_config.inverted)
+
+        self._motor_config.motor_output.neutral_mode = motor_config.neutral_mode
+
+        self._motor_config.current_limits = CurrentLimitsConfigs() \
+            .with_supply_current_limit_enable(current_config.current_limit_enabled) \
+            .with_supply_current_limit(current_config.drive_current_limit) \
+            .with_supply_current_lower_limit(current_config.drive_current_threshold) \
+            .with_supply_current_lower_time(current_config.drive_current_time)
+
+        _ = self._motor.configurator.apply(self._motor_config)
+
+    @override
+    def periodic(self) -> None:
+        '''
+        Handles Smart Dashboard diagnostic information and actually controlling the motors
+        '''
+        if not SmartDashboard.getBoolean(f"{self._motor_name} Test Mode", False):
+            if self._target_speed.power == 0.0 and self._target_speed.speed == 0.0:
+                self._pid_controller.reset(0)
+                self._motor.setVoltage(0)
+
+            elif self._target_speed.power != 0.0:
+                self._motor.set(self._target_speed.power)
+            
+            else:
+                pid: volts = self._pid_controller.calculate(self._motor.get_velocity().value, self._target_speed.speed)
+                feed_forward: volts = self._feed_forward_controller.calculate(self._motor.get_velocity().value, self._target_speed.speed)
+                self._motor.setVoltage(pid + feed_forward)
+
+        self.print_diagnostics()
+    
+    def set_speed(self, speed: SC_TemplateMotorVelocityControl) -> None:
+        '''
+        Sets the target speed for the motor
+
+        Parameters:
+            - speed (SC_TemplateMotorVelocityControl): The speed and power to set the motor to
+        '''
+        self._target_speed = SC_TemplateMotorVelocityControl(speed.speed * self._gear_ratio, speed.power)
+
+    def at_target_speed(self) -> bool:
+        '''
+        Checks if the motor is at the target speed
+
+        Returns:
+            - bool: True if the motor is at the target speed, False otherwise
+        '''
+        if self._target_speed.power == 0.0 and self._target_speed.speed == 0.0:
+            return True
+
+        elif self._target_speed.power != 0.0:
+            return (self._motor.get() - self._target_speed.speed) * (1 if self._target_speed.speed >= 0 else -1) > 0
+
+        # Convert RPS to RPM, then subtract the target speed and compare to the tolerance
+        return abs((self._motor.get_velocity().value * 60) - self._target_speed.speed) < self._tolerance
+
+    def set_brake_mode(self) -> None:
+        '''
+        Sets the motor to brake mode
+        '''
+        self._motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
+        _ = self._motor.configurator.apply(self._motor_config)
+
+    def set_coast_mode(self) -> None:
+        '''
+        Sets the motor to coast mode
+        '''
+        self._motor_config.motor_output.neutral_mode = NeutralModeValue.COAST
+        _ = self._motor.configurator.apply(self._motor_config)
+
+    def set_power(self, power: float) -> None:
+        '''
+        Sets the power of the motor for testing purposes
+
+        Parameters:
+            - power (float): The power to set the motor to
+        '''
+        # TODO: Have a boolean for testing mode to disable PID and feed forward
+        self._target_speed = SC_TemplateMotorVelocityControl(0.0, power)
+
+    def get_stall_percentage(self) -> float:
+        '''
+        Returns the percentage of stall current being drawn by the motor
+
+        Returns:
+            - float: The percentage of stall current being drawn by the motor
+        '''
+        if abs(self._motor.get()) > self.stall_limit:
+            return (self._motor.get_supply_current().value / self._motor.get_motor_stall_current().value * abs(self._motor.get()))
+        else:
+            return 0
+
+    def get_stalled(self) -> bool:
+        '''
+        Returns whether the motor is stalled or not
+
+        Returns:
+            - bool: True if the motor is stalled, False otherwise
+        '''
+        return self.get_stall_percentage() > self.stall_limit
+    
+    def print_diagnostics(self) -> None:
+        '''
+        Prints diagnostic information to Smart Dashboard
+        '''
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Test Mode", False)
+
+        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
+            _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
+            _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
+
+    
