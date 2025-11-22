@@ -80,7 +80,7 @@ class VelocityMotor(Subsystem):
         '''
         Handles Smart Dashboard diagnostic information and actually controlling the motors
         '''
-        if not SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+        if not SmartDashboard.getBoolean(f"{self._motor_name} Test Mode", False):
             if self._target_speed.power == 0.0 and self._target_speed.speed == 0.0:
                 self._pid_controller.reset(0)
                 self._motor.setVoltage(0)
@@ -169,6 +169,9 @@ class VelocityMotor(Subsystem):
         '''
         Prints diagnostic information to Smart Dashboard
         '''
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Test Mode", False)
+
         if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
             _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
             _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())

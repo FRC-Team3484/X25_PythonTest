@@ -107,7 +107,7 @@ class AngularPositionMotor(Subsystem):
         # TODO: Should this check for a home position so it can know to 
         #     stop powering even if we're not using a homing state?
         # TODO: What was the encoder going to be used for?
-        if self._state == State.POSITION:
+        if self._state == State.POSITION and not SmartDashboard.getBoolean(f"{self._motor_name} Test Mode", False):
             current_state = self._trapezoid.calculate(self._trapezoid_timer.get(), self._initial_state, self._target_state)
             feed_forward = self._feed_forward_controller.calculate(self._previous_velocity, current_state.velocity)
             pid = self._pid_controller.calculate(self.get_angle(), current_state.position)
@@ -213,6 +213,9 @@ class AngularPositionMotor(Subsystem):
         '''
         Prints diagnostic information to Smart Dashboard
         '''
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Test Mode", False)
+
         if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
             _ = SmartDashboard.putNumber(f"{self._motor_name} Angle (degrees)", self.get_angle())
             _ = SmartDashboard.putNumber(f"{self._motor_name} Velocity", self.get_velocity())
