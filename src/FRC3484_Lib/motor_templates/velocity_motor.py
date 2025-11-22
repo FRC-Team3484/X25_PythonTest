@@ -45,6 +45,7 @@ class VelocityMotor(Subsystem):
         self._tolerance: float = tolerance
         self._gear_ratio: float = gear_ratio
         self._motor_name: str = motor_config.motor_name
+        self.stall_limit: float = motor_config.stall_limit
 
         # If the motor_type is minion, it needs a talon FXS controller to be able to set the correct commutation
         # There is no communtation for the falcon, so use a talon FX controller instead
@@ -79,10 +80,6 @@ class VelocityMotor(Subsystem):
         '''
         Handles Smart Dashboard diagnostic information and actually controlling the motors
         '''
-        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
-            _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())
-
         if not SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
             if self._target_speed.power == 0.0 and self._target_speed.speed == 0.0:
                 self._pid_controller.reset(0)
@@ -95,7 +92,8 @@ class VelocityMotor(Subsystem):
                 pid: volts = self._pid_controller.calculate(self._motor.get_velocity().value, self._target_speed.speed)
                 feed_forward: volts = self._feed_forward_controller.calculate(self._motor.get_velocity().value, self._target_speed.speed)
                 self._motor.setVoltage(pid + feed_forward)
-        
+
+        self.print_diagnostics()
     
     def set_speed(self, speed: SC_TemplateMotorVelocityControl) -> None:
         '''
@@ -145,5 +143,37 @@ class VelocityMotor(Subsystem):
         '''
         # TODO: Have a boolean for testing mode to disable PID and feed forward
         self._target_speed = SC_TemplateMotorVelocityControl(0.0, power)
+
+    def get_stall_percentage(self) -> float:
+        '''
+        Returns the percentage of stall current being drawn by the motor
+
+        Returns:
+            - float: The percentage of stall current being drawn by the motor
+        '''
+        if abs(self._motor.get()) > self.stall_limit:
+            return (self._motor.get_supply_current().value / self._motor.get_motor_stall_current().value * abs(self._motor.get()))
+        else:
+            return 0
+
+    def get_stalled(self) -> bool:
+        '''
+        Returns whether the motor is stalled or not
+
+        Returns:
+            - bool: True if the motor is stalled, False otherwise
+        '''
+        return self.get_stall_percentage() > self.stall_limit
+    
+    def print_diagnostics(self) -> None:
+        '''
+        Prints diagnostic information to Smart Dashboard
+        '''
+        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
+            _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
+            _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
 
     
