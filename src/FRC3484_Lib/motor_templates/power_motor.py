@@ -1,10 +1,14 @@
+from typing import override
+from commands2 import Subsystem
+
 from phoenix6.hardware import TalonFX, TalonFXS
 from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFXSConfiguration
 from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
+from wpilib import SmartDashboard
 
 from src.FRC3484_Lib.SC_Datatypes import SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig
 
-class PowerMotor:
+class PowerMotor(Subsystem):
     '''
     Creates a motor template class that can be used to create a 
         base motor that simply powers forwards or backwards at a given power
@@ -13,9 +17,18 @@ class PowerMotor:
         - motor_config (SC_MotorConfig): The configuration for the motor
         - current_config (SC_TemplateMotorCurrentConfig): Current limit settings for the motor
     '''
-    def __init__(self, motor_config: SC_TemplateMotorConfig, current_config: SC_TemplateMotorCurrentConfig) -> None:
+    def __init__(
+            self, 
+            motor_config: SC_TemplateMotorConfig, 
+            current_config: SC_TemplateMotorCurrentConfig
+        ) -> None:
+        super().__init__()
+        
         self._motor: TalonFX | TalonFXS
         self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
+
+        self._motor_name: str = motor_config.motor_name
+        self.stall_limit: float = motor_config.stall_limit
 
         # If the motor_type is minion, it needs a talon FXS controller to be able to set the correct commutation
         # There is no communtation for the falcon, so use a talon FX controller instead
@@ -45,6 +58,12 @@ class PowerMotor:
 
         _ = self._motor.configurator.apply(self._motor_config)
 
+    def periodic(self) -> None:
+        '''
+        Handles printing diagnostic information to Smart Dashboard
+        '''
+        self.print_diagnostics()
+
     def set_power(self, power: float) -> None:
         '''
         Sets the power of the motor
@@ -67,3 +86,33 @@ class PowerMotor:
         '''
         self._motor_config.motor_output.neutral_mode = NeutralModeValue.COAST
         _ = self._motor.configurator.apply(self._motor_config)
+
+    def get_stall_percentage(self) -> float:
+        '''
+        Returns the percentage of stall current being drawn by the motor
+
+        Returns:
+            - float: The percentage of stall current being drawn by the motor
+        '''
+        if abs(self._motor.get()) > self.stall_limit:
+            return (self._motor.get_supply_current().value / self._motor.get_motor_stall_current().value * abs(self._motor.get()))
+        else:
+            return 0
+
+    def get_stalled(self) -> bool:
+        '''
+        Returns whether the motor is stalled or not
+
+        Returns:
+            - bool: True if the motor is stalled, False otherwise
+        '''
+        return self.get_stall_percentage() > self.stall_limit
+    
+    def print_diagnostics(self) -> None:
+        '''
+        Prints diagnostic information to Smart Dashboard
+        '''
+        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
+            _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
+            _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
