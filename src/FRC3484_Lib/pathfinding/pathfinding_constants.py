@@ -16,6 +16,6 @@ class PathfindingCommandConstants:
 
 @dataclass(frozen=True)
 class FinalAlignmentCommandConstants:
-    FINAL_ALIGN_EXIT: seconds = 999.0
+    FINAL_ALIGN_EXIT: seconds = 3.0
     FINAL_POSE_TOLERANCE: meters = inchesToMeters(0.3)
     FINAL_ROTATION_TOLERANCE: degrees = 1
