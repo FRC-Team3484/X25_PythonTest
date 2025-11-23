@@ -8,8 +8,8 @@ from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 from wpimath.trajectory import TrapezoidProfile
 
 from phoenix6.hardware import TalonFX, TalonFXS, CANcoder
-from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFXSConfiguration
-from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
+from phoenix6.configs import CurrentLimitsConfigs, ExternalFeedbackConfigs, FeedbackConfigs, TalonFXConfiguration, TalonFXSConfiguration
+from phoenix6.signals import ExternalFeedbackSensorSourceValue, FeedbackSensorSourceValue, InvertedValue, MotorArrangementValue, NeutralModeValue
 
 from src.FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_TrapezoidConfig
 
@@ -78,10 +78,20 @@ class AngularPositionMotor(Subsystem):
 
             self._motor_config.commutation.motor_arrangement = MotorArrangementValue.MINION_JST
 
+            if self._encoder is not None:
+                self._motor_config.external_feedback = ExternalFeedbackConfigs() \
+                    .with_feedback_remote_sensor_id(self._encoder.device_id) \
+                    .with_external_feedback_sensor_source(ExternalFeedbackSensorSourceValue.REMOTE_CANCODER)
+
         elif motor_config.motor_type == "falcon":
             self._motor = TalonFX(motor_config.can_id, motor_config.can_bus_name)
 
             self._motor_config = TalonFXConfiguration()
+
+            if self._encoder is not None:
+                self._motor_config.feedback = FeedbackConfigs() \
+                    .with_feedback_remote_sensor_id(self._encoder.device_id) \
+                    .with_feedback_sensor_source(FeedbackSensorSourceValue.REMOTE_CANCODER)
         else:
             raise ValueError(f"Invalid motor type: {motor_config.motor_type}")
 
@@ -115,7 +125,7 @@ class AngularPositionMotor(Subsystem):
 
             self._motor.setVoltage(pid + feed_forward)
             self._previous_velocity = current_state.velocity
-            
+
         if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", defaultValue=False):
             self.print_diagnostics()
 
