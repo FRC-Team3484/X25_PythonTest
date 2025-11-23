@@ -26,7 +26,11 @@ class SwerveConstants:
     STEER_RATIO: float = 12.8 # Ratio from steer motor to wheel, steer encoder is 1:1
     MAX_WHEEL_SPEED: meters_per_second = feetToMeters(8.0) # feet per second
 
-    DRIVE_CONTROLLER = PPHolonomicDriveController(
+    DRIVE_CONTROLLER = PPHolonomicDriveController( # For path following
+        PIDConstants(5.0, 0.0, 0.0),
+        PIDConstants(5.0, 0.0, 0.0)
+    )
+    ALIGNMENT_CONTROLLER = PPHolonomicDriveController( # For final alignment
         PIDConstants(10.0, 0.0, 0.0),
         PIDConstants(7.0, 0.0, 0.0)
     )
@@ -175,7 +179,7 @@ class PathfindingConstants:
             Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(-7)), Rotation2d.fromDegrees(180.0)),
             Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(7)), Rotation2d.fromDegrees(180.0))
         ],
-        safe_distance=12.0,
+        safe_distance=80.0,
         field=VisionConstants.APRIL_TAG_FIELD
     )
 
@@ -185,7 +189,7 @@ class PathfindingConstants:
             Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(-22)), Rotation2d.fromDegrees(0.0)),
             Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(22)), Rotation2d.fromDegrees(0.0))
         ],
-        safe_distance=12.0,
+        safe_distance=144.0,
         field=VisionConstants.APRIL_TAG_FIELD
     )
 
@@ -194,6 +198,6 @@ class PathfindingConstants:
         offsets=[
             Pose2d(Translation2d(inchesToMeters(22), 0), Rotation2d.fromDegrees(180.0))
         ],
-        safe_distance=12.0,
+        safe_distance=60.0,
         field=VisionConstants.APRIL_TAG_FIELD
     )
