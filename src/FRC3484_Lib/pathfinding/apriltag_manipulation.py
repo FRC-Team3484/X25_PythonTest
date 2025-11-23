@@ -37,9 +37,10 @@ def apply_offset_to_pose(pose: Pose2d, offset: Pose2d) -> Pose2d:
 
 def apply_offsets_to_poses(poses: Iterable[Pose2d], offsets: Iterable[Pose2d]) -> list[Pose2d]:
     """
-    Applies a list of offsets to a list of poses
-    Will return the number of offsets equal to poses times offsets
-    For example, if two poses and two offsets are provided, four poses will be returned
+    Applies a list of offsets to a list of poses  
+    Will return the number of offsets equal to poses times offsets  
+    For example, if two poses and two offsets are provided, four poses will be returned  
+    This iterates through offsets first, then poses: p1o1, p1o2, p2o1, p2o2...
 
     Parameters:
         - poses (list[Pose2d]): The poses to apply the offsets to
