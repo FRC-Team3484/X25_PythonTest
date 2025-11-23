@@ -6,11 +6,13 @@ import commands2
 from wpimath.units import inches, inchesToMeters
 
 from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.path import PathPlannerPath, Waypoint, GoalEndState
 
 from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
 from src.FRC3484_Lib.pathfinding.pathfinding_constants import PathfindingCommandConstants
 from src.FRC3484_Lib.pathfinding.final_alignment_command import FinalAlignmentCommand
 from src.FRC3484_Lib.pathfinding.apriltag_manipulation import get_nearest_pose
+from src.FRC3484_Lib.SC_Datatypes import SC_ApriltagTarget
 
 class SC_Pathfinding:
     """
@@ -20,13 +22,13 @@ class SC_Pathfinding:
 
     Parameters:
         - drivetrain_subsystem (DrivetrainSubsystem): The drivetrain subsystem
-        - pose_supplier (DrivetrainSubsystem.poseSupplier): The pose supplier
+        - pose_supplier (DrivetrainSubsystem.poseSupplier): Function to get the robot's current pose
         - april_tag_field_layout (AprilTagFieldLayout): The april tag field layout
     """
-    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], drive_controller: PathFollowingController) -> None:
+    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], alignment_controller: PathFollowingController) -> None:
         self._drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
         self._pose_supplier: Callable[[], Pose2d] = pose_supplier
-        self._drive_controller: PathFollowingController = drive_controller
+        self._alignment_controller: PathFollowingController = alignment_controller
 
     def get_final_alignment_command(self, target: Pose2d) -> commands2.Command:
         """
@@ -39,13 +41,13 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to align to the target
         """
-        return FinalAlignmentCommand(self._drivetrain_subsystem, target, self._drive_controller)
+        return FinalAlignmentCommand(target, self._alignment_controller, self._pose_supplier, lambda chassis_speeds: self._drivetrain_subsystem.drive_robotcentric(chassis_speeds, False), self._drivetrain_subsystem)
 
     def get_near_pose_command(self, target: Pose2d, distance: inches) -> commands2.Command:
         """
         Returns a command that does nothing and waits until the robot is within a distance, then exits
-        Designed to be used in a ParallelCommandGroup with FinalAlignmentCommand, 
-            so once the robot is close to its end position, the command group will exit
+        Intended to be used in parallel with a pathing command so once the robot is close to its end position, 
+            the command group will exit and the final alignment command can take over
 
         Parameters:
             - target (Pose2d): The target pose to align to
@@ -56,61 +58,86 @@ class SC_Pathfinding:
         """
         return commands2.WaitUntilCommand(lambda: self._pose_supplier().translation().distance(target.translation()) < inchesToMeters(distance))
     
-    def get_pathfind_command(self, target: Pose2d, distance: inches, defer: bool) -> commands2.Command | commands2.SequentialCommandGroup:
+    def get_pathfollow_command(self, start_pose: Pose2d, target: Pose2d, intermediate_points: Iterable[Pose2d] | None = None) -> commands2.Command:
         """
-        Returns a command that creates a path to drive to the target pose
-        If a distance is provided, it will use a FinalAlignmentCommand to align to the target
-            once the robot is within that distance
+        Returns a command that drives from start pose to target pose, without opstacle avoidance and optionally through intermediate points
 
         Parameters:
-            - target (Pose2d): The target pose to drive to
-            - distance (inches): The distance to wait before exiting
-            - defer (bool): Whether to defer the command
+            - start_pose (Pose2d): The starting pose
+            - target (Pose2d): The target pose
+            - intermediate_points (list[Pose2d] | None): Optional intermediate points to drive through
+
+        Returns:
+            - Command: The command to drive through all the points
+        """
+        poses: list[Pose2d] = [start_pose]
+        if intermediate_points is not None:
+            poses.extend(intermediate_points)
+        poses.append(target)
+
+        path = PathPlannerPath(
+            PathPlannerPath.waypointsFromPoses(poses),
+            PathfindingCommandConstants.PATH_CONSTRAINTS,
+            None,
+            GoalEndState(0, target.rotation())
+        )
+
+        path.preventFlipping = True
+
+        return AutoBuilder.followPath(path)
+
+    
+    def get_pathfind_command(self, target: Pose2d) -> commands2.Command:
+        """
+        Returns a command that drives to target pose, avoiding obstacles.  
+        This command is NOT safe for use in autonomous, use pathfind_to_pose instead
+
+        Parameters:
+            - target (Pose2d): The target pose
 
         Returns:
             - Command: The command to drive to the target
         """
-
-        if defer:
-            """
-            If the pathfind command isn't going to be run immediately, it needs to be deferred
-            to ensure the robot's current pose is accurate when the command is executed.
-            """
-            pathfinding_command: commands2.Command = commands2.DeferredCommand(
-                lambda target=target: AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0),
-                self._drivetrain_subsystem
-            )
-        else:
-            pathfinding_command = AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0)
-
-        if distance > 0:
-            return self.get_near_pose_command(target, distance) \
-                .raceWith(pathfinding_command) \
-                .andThen(self.get_final_alignment_command(target))
-        else:
-            return pathfinding_command
-
-    def go_to_nearest_pose(self, poses: Iterable[Pose2d], distance: inches = 0.0, defer: bool = False) -> commands2.Command:
+        return AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0)
+    
+    def pathfind_to_pose(self, target_pose: Pose2d, defer: bool = False) -> commands2.Command:
         """
-        Returns a command that creates a path to first find the nearest pose from
-            the given list of poses, then generates a command to drive to that pose
-
-        If a distance is provided, it will use a FinalAlignmentCommand to align to the target
-            once the robot is within that distance
+        Returns a command that creates a path to drive to the given target pose.
+        This command is safe for use in autonomous
 
         Parameters:
-            - poses (list[Pose2d]): The list of poses to find the nearest pose from
-            - distance (inches): The distance to wait before exiting
+            - target_pose (Pose2d): The target pose to drive to
             - defer (bool): Whether to defer the command
 
         Returns:
-            - Command: The command to drive to the target
+            - Command: The command to drive to the target pose
         """
+        if defer: return commands2.DeferredCommand(lambda: self.pathfind_to_pose(target_pose, defer=False))
 
-        if defer:
-            return commands2.DeferredCommand(
-                lambda poses=poses: self.get_pathfind_command(get_nearest_pose(self._pose_supplier(), poses), distance, False), 
-                self._drivetrain_subsystem
-            )
+        start_pose: Pose2d = self._pose_supplier()
+        if target_pose.relativeTo(start_pose).translation().norm() < PathfindingCommandConstants.FINAL_ALIGNMENT_DISTANCE:
+            drive_command: commands2.Command = self.get_pathfollow_command(start_pose, target_pose)
         else:
-            return self.get_pathfind_command(get_nearest_pose(self._pose_supplier(), poses), distance, defer)
+            drive_command: commands2.Command = self.get_pathfind_command(target_pose)
+
+        return commands2.SequentialCommandGroup(
+            commands2.ParallelCommandGroup(
+                drive_command,
+                self.get_near_pose_command(target_pose, PathfindingCommandConstants.FINAL_ALIGNMENT_DISTANCE)
+            ),
+            self.get_final_alignment_command(target_pose)
+        )
+
+    def pathfind_to_target(self, target: SC_ApriltagTarget, defer: bool = False) -> commands2.Command:
+        """
+        Returns a command that creates a path to drive to the nearest point on the given target.  
+        This command is safe for use in autonomous
+
+        Parameters:
+            - target (SC_ApriltagTarget): The april tag target to drive to
+            - start_pose (Pose2d | None): The starting pose. If None, will use the robot's current pose.
+
+        Returns:
+            - Command: The command to drive to the nearest point on the target
+        """
+        return self.pathfind_to_pose(target.get_nearest(self._pose_supplier()), defer=defer)
