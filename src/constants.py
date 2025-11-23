@@ -169,13 +169,31 @@ class VisionConstants:
 class PathfindingConstants:
     FINAL_ALIGNMENT_DISTANCE: inches = 6.0
 
-    REEF_APRIL_TAG_IDS: tuple[int, ...] = (6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22)
-    LEFT_REEF_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(-7)), Rotation2d.fromDegrees(180.0))
-    RIGHT_REEF_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(7)), Rotation2d.fromDegrees(180.0))
+    REEF_TARGET: SC_ApriltagTarget = SC_ApriltagTarget(
+        apriltag_ids=(6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22),
+        offsets=[
+            Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(-7)), Rotation2d.fromDegrees(180.0)),
+            Pose2d(Translation2d(inchesToMeters(22), inchesToMeters(7)), Rotation2d.fromDegrees(180.0))
+        ],
+        safe_distance=12.0,
+        field=VisionConstants.APRIL_TAG_FIELD
+    )
 
-    FEEDER_STATION_APRIL_TAG_IDS: tuple[int, ...] = (1, 2, 12, 13)
-    LEFT_FEEDER_STATION_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(-22)), Rotation2d.fromDegrees(0.0))
-    RIGHT_FEEDER_STATION_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(22)), Rotation2d.fromDegrees(0.0))
+    FEEDER_STATION_TARGET: SC_ApriltagTarget = SC_ApriltagTarget(
+        apriltag_ids=(1, 2, 12, 13),
+        offsets=[
+            Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(-22)), Rotation2d.fromDegrees(0.0)),
+            Pose2d(Translation2d(inchesToMeters(20), inchesToMeters(22)), Rotation2d.fromDegrees(0.0))
+        ],
+        safe_distance=12.0,
+        field=VisionConstants.APRIL_TAG_FIELD
+    )
 
-    PROCESSOR_APRIL_TAG_IDS: tuple[int, ...] = (3, 16)
-    PROCESSOR_OFFSET: Pose2d = Pose2d(Translation2d(inchesToMeters(22), 0), Rotation2d.fromDegrees(180.0))
+    PROCESSOR_TARGET: SC_ApriltagTarget = SC_ApriltagTarget(
+        apriltag_ids=(3, 16),
+        offsets=[
+            Pose2d(Translation2d(inchesToMeters(22), 0), Rotation2d.fromDegrees(180.0))
+        ],
+        safe_distance=12.0,
+        field=VisionConstants.APRIL_TAG_FIELD
+    )
