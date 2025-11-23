@@ -75,6 +75,8 @@ class VelocityMotor(Subsystem):
 
         _ = self._motor.configurator.apply(self._motor_config)
 
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
+
     @override
     def periodic(self) -> None:
         '''
@@ -93,7 +95,8 @@ class VelocityMotor(Subsystem):
                 feed_forward: volts = self._feed_forward_controller.calculate(self._motor.get_velocity().value, self._target_speed.speed)
                 self._motor.setVoltage(pid + feed_forward)
 
-        self.print_diagnostics()
+        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+            self.print_diagnostics()
     
     def set_speed(self, speed: SC_VelocityControl) -> None:
         '''
@@ -169,14 +172,10 @@ class VelocityMotor(Subsystem):
         '''
         Prints diagnostic information to Smart Dashboard
         '''
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Test Mode", False)
-
-        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
-            _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
-            _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
+        _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
 
     

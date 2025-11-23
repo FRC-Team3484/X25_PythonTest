@@ -98,6 +98,7 @@ class AngularPositionMotor(Subsystem):
         _ = self._motor.configurator.apply(self._motor_config)        
 
         self._trapezoid_timer.start()
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
 
     @override
     def periodic(self) -> None:
@@ -107,15 +108,16 @@ class AngularPositionMotor(Subsystem):
         # TODO: Should this check for a home position so it can know to 
         #     stop powering even if we're not using a homing state?
         # TODO: What was the encoder going to be used for?
-        if self._state == State.POSITION and not SmartDashboard.getBoolean(f"{self._motor_name} Test Mode", False):
+        if self._state == State.POSITION:
             current_state = self._trapezoid.calculate(self._trapezoid_timer.get(), self._initial_state, self._target_state)
             feed_forward = self._feed_forward_controller.calculate(self._previous_velocity, current_state.velocity)
             pid = self._pid_controller.calculate(self.get_angle(), current_state.position)
 
             self._motor.setVoltage(pid + feed_forward)
             self._previous_velocity = current_state.velocity
-
-        self.print_diagnostics()
+            
+        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", defaultValue=False):
+            self.print_diagnostics()
 
     def at_target_angle(self) -> bool:
         '''
@@ -208,12 +210,8 @@ class AngularPositionMotor(Subsystem):
         '''
         Prints diagnostic information to Smart Dashboard
         '''
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Test Mode", False)
-
-        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Angle (degrees)", self.get_angle())
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Velocity", self.get_velocity())
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
-            _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
-            _ = SmartDashboard.putBoolean(f"{self._motor_name} At Target Angle", self.at_target_angle())
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Angle (degrees)", self.get_angle())
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Velocity", self.get_velocity())
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} At Target Angle", self.at_target_angle())

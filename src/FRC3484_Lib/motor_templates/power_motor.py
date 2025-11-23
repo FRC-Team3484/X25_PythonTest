@@ -58,11 +58,14 @@ class PowerMotor(Subsystem):
 
         _ = self._motor.configurator.apply(self._motor_config)
 
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
+
     def periodic(self) -> None:
         '''
         Handles printing diagnostic information to Smart Dashboard
         '''
-        self.print_diagnostics()
+        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
+            self.print_diagnostics()
 
     def set_power(self, power: float) -> None:
         '''
@@ -112,9 +115,6 @@ class PowerMotor(Subsystem):
         '''
         Prints diagnostic information to Smart Dashboard
         '''
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
-        
-        if SmartDashboard.getBoolean(f"{self._motor_name} Diagnostics", False):
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
-            _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
-            _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
+        _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
+        _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
