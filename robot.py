@@ -5,7 +5,6 @@ from typing import Callable, Optional, cast
 
 import commands2.sysid
 import wpilib
-from wpimath.geometry import Pose2d
 import commands2
 
 from src.config import *
@@ -97,32 +96,13 @@ class MyRobot(commands2.TimedCommandRobot):
 
             if PATHFINDING_ENABLED:
                 from src.FRC3484_Lib.pathfinding.pathfinding import SC_Pathfinding
-                pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, VisionConstants.APRIL_TAG_FIELD, SwerveConstants.DRIVE_CONTROLLER)
+                pathfinder: SC_Pathfinding = SC_Pathfinding(self._drivetrain, self._drivetrain.get_pose, lambda speeds: self._drivetrain.drive_robotcentric(speeds, False), SwerveConstants.ALIGNMENT_CONTROLLER)
 
-                # Pre-process april tag poses with offsets
-                from src.constants import PathfindingConstants
-                reef_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
-                    pathfinder.get_april_tag_poses(PathfindingConstants.REEF_APRIL_TAG_IDS),
-                    (PathfindingConstants.LEFT_REEF_OFFSET, PathfindingConstants.RIGHT_REEF_OFFSET)
-                )
-                feeder_station_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
-                    pathfinder.get_april_tag_poses(PathfindingConstants.FEEDER_STATION_APRIL_TAG_IDS),
-                    (PathfindingConstants.LEFT_FEEDER_STATION_OFFSET, PathfindingConstants.RIGHT_FEEDER_STATION_OFFSET)
-                )
-                processor_poses: list[Pose2d] = pathfinder.apply_offsets_to_poses(
-                    pathfinder.get_april_tag_poses(PathfindingConstants.PROCESSOR_APRIL_TAG_IDS),
-                    (PathfindingConstants.PROCESSOR_OFFSET,)
-                )
-                
-                pathfind_function: Callable[[list[Pose2d]], commands2.Command] = lambda poses: pathfinder.get_pathfind_command(
-                                pathfinder.get_nearest_pose(poses),
-                                PathfindingConstants.FINAL_ALIGNMENT_DISTANCE,
-                                defer=False
-                            )
                 # Lambdas for creating paths. These will be called when starting pathfinding commands.
-                self._pathfind_to_reef = lambda poses=reef_poses: pathfind_function(poses)
-                self._pathfind_to_feeder_station = lambda poses=feeder_station_poses: pathfind_function(poses)
-                self._pathfind_to_processor = lambda poses=processor_poses: pathfind_function(poses)
+                from src.constants import PathfindingConstants
+                self._pathfind_to_reef = lambda: pathfinder.pathfind_to_target(PathfindingConstants.REEF_TARGET)
+                self._pathfind_to_feeder_station = lambda: pathfinder.pathfind_to_target(PathfindingConstants.FEEDER_STATION_TARGET)
+                self._pathfind_to_processor = lambda: pathfinder.pathfind_to_target(PathfindingConstants.PROCESSOR_TARGET)
 
         """
         Test Mode Choosers
