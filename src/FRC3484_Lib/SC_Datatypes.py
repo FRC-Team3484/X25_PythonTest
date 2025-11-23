@@ -188,6 +188,16 @@ class SC_ApriltagTarget:
             - list[Pose2d]: The target poses for the current alliance
         """
         return self._target_poses[self._alliance]
+    
+    @property
+    def safe_distance(self) -> meters:
+        """
+        Returns the safe distance to maintain from the target
+
+        Returns:
+            - meters: The safe distance
+        """
+        return self._safe_distance
 
     def get_targets_for_alliance(self, alliance: DriverStation.Alliance) -> list[Pose2d]:
         """
@@ -206,7 +216,7 @@ class SC_ApriltagTarget:
         return self._target_poses[alliance]
 
 
-    def get_nearest_target(self, current_position: Pose2d) -> Pose2d:
+    def get_nearest(self, current_position: Pose2d) -> Pose2d:
         """
         Returns the nearest target pose to the robot's current position
 
