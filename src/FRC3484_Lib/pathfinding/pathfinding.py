@@ -1,17 +1,16 @@
 from typing import Callable, Iterable
 
-from pathplannerlib.controller import PathFollowingController
-from wpimath.geometry import Pose2d
 import commands2
+from wpimath.geometry import Pose2d
+from wpimath.kinematics import ChassisSpeeds
 from wpimath.units import inches, inchesToMeters
 
 from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.path import PathPlannerPath, Waypoint, GoalEndState
+from pathplannerlib.controller import PathFollowingController
+from pathplannerlib.path import PathPlannerPath, GoalEndState
 
-from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
 from src.FRC3484_Lib.pathfinding.pathfinding_constants import PathfindingCommandConstants
 from src.FRC3484_Lib.pathfinding.final_alignment_command import FinalAlignmentCommand
-from src.FRC3484_Lib.pathfinding.apriltag_manipulation import get_nearest_pose
 from src.FRC3484_Lib.SC_Datatypes import SC_ApriltagTarget
 
 class SC_Pathfinding:
@@ -21,13 +20,15 @@ class SC_Pathfinding:
     Can do april tag math, and return commands for pathfinding
 
     Parameters:
-        - drivetrain_subsystem (DrivetrainSubsystem): The drivetrain subsystem
-        - pose_supplier (DrivetrainSubsystem.poseSupplier): Function to get the robot's current pose
-        - april_tag_field_layout (AprilTagFieldLayout): The april tag field layout
+        - drivetrain_subsystem (Subsystem): The drivetrain subsystem for adding command requirements
+        - pose_supplier (Callable[[], Pose2d]): Function to get the robot's current pose
+        - output (Callable[[ChassisSpeeds], None]): Function to output chassis speeds to the drivetrain
+        - alignment_controller (PathFollowingController): The controller to use for final alignment
     """
-    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, pose_supplier: Callable[[], Pose2d], alignment_controller: PathFollowingController) -> None:
-        self._drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
+    def __init__(self, drivetrain_subsystem: commands2.Subsystem, pose_supplier: Callable[[], Pose2d], output: Callable[[ChassisSpeeds], None], alignment_controller: PathFollowingController) -> None:
+        self._drivetrain_subsystem: commands2.Subsystem = drivetrain_subsystem
         self._pose_supplier: Callable[[], Pose2d] = pose_supplier
+        self._output: Callable[[ChassisSpeeds], None] = output
         self._alignment_controller: PathFollowingController = alignment_controller
 
     def get_final_alignment_command(self, target: Pose2d) -> commands2.Command:
@@ -41,7 +42,7 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to align to the target
         """
-        return FinalAlignmentCommand(target, self._alignment_controller, self._pose_supplier, lambda chassis_speeds: self._drivetrain_subsystem.drive_robotcentric(chassis_speeds, False), self._drivetrain_subsystem)
+        return FinalAlignmentCommand(target, self._alignment_controller, self._pose_supplier, self._output, self._drivetrain_subsystem)
 
     def get_near_pose_command(self, target: Pose2d, distance: inches) -> commands2.Command:
         """
