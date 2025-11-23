@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from wpimath.units import \
     seconds, \
     inches, \
+    meters, \
     degrees, \
     volts, \
     amperes, \
@@ -13,7 +14,8 @@ from wpimath.units import \
     volt_seconds_per_meter, \
     volt_seconds_squared_per_meter, \
     volt_seconds_per_radian, \
-    volt_seconds_squared_per_radian
+    volt_seconds_squared_per_radian, \
+    inchesToMeters
 
 from wpilib import PneumaticsModuleType, DriverStation
 from wpimath.geometry import Transform3d, Pose2d
@@ -142,8 +144,11 @@ class SC_ApriltagTarget:
     def __init__(self, apriltag_ids: Iterable[int], offsets: Iterable[Pose2d], safe_distance: inches, field: AprilTagField, red_apriltag_ids: Iterable | None = None) -> None:
         """
         A class for holding all information needed to pathfind to a field element
+
         Target poses are calculated by applying offsets to april tag poses
-        Positive X is in front of the april tag, positive Y is to the left of the april tag
+
+        Positive X is in front of the april tag, positive Y is to the right of the april tag (when facing the tag), and
+
         0 degrees rotation is facing away from the april tag, positive rotation is counter-clockwise
 
         Parameters:
@@ -173,7 +178,7 @@ class SC_ApriltagTarget:
             )
         }
 
-        self._safe_distance: inches = safe_distance
+        self._safe_distance: meters = inchesToMeters(safe_distance)
 
     @property
     def targets(self) -> list[Pose2d]:
@@ -201,7 +206,7 @@ class SC_ApriltagTarget:
         return self._target_poses[alliance]
 
 
-    def get_nearest(self, current_position: Pose2d) -> Pose2d:
+    def get_nearest_target(self, current_position: Pose2d) -> Pose2d:
         """
         Returns the nearest target pose to the robot's current position
 
