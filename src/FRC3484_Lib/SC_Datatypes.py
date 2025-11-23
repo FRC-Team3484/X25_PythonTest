@@ -68,13 +68,46 @@ class SC_LinearFeedForwardConfig:
 @dataclass(frozen=True)
 class SC_MotorConfig:
     can_id: int
-    inverted: bool = False
     can_bus_name: str = "rio"
+
+    motor_name: str = "Motor" # Should be changed. Used for Smart Dashboard diagnostics
+    motor_type: str = "falcon" # falcon or minion
+    inverted: bool = False
+    neutral_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
     
     current_limit_enabled: bool = True
     current_threshold: amperes = 50
     current_time: seconds = 0.1
     current_limit: amperes = 20
+    stall_limit: float = 0.75
+
+@dataclass(frozen=True)
+class SC_CurrentConfig:
+    drive_current_threshold: amperes = 60
+    drive_current_time: seconds = 0.1
+    drive_current_limit: amperes = 35
+    drive_open_loop_ramp: seconds = 0.25
+
+    steer_current_threshold: amperes = 40
+    steer_current_time: seconds = 0.1
+    steer_current_limit: amperes = 25
+
+    current_limit_enabled: bool = True
+
+@dataclass(frozen=True)
+class SC_VelocityControl:
+    speed: revolutions_per_minute
+    power: float
+
+@dataclass
+class SC_PositionControl:
+    speed: float
+    position: inches
+
+@dataclass(frozen=True)
+class SC_TrapezoidConfig:
+    max_velocity: feet_per_second | degrees_per_second
+    max_acceleration: feet_per_second_squared | degrees_per_second_squared
 
 '''
 Swerve Drive Datatypes
@@ -139,50 +172,3 @@ class SC_CameraResults:
     vision_measurement: Pose2d
     timestamp: seconds
     standard_deviation: tuple[float, float, float]
-
-'''
-Motor Template Classes Datatypes
-'''
-@dataclass(frozen=True)
-class SC_TemplateMotorConfig:
-    motor_name: str = "Motor" # Should be changed. Used for Smart Dashboard diagnostics
-    can_id: int
-    inverted: bool = False
-    can_bus_name: str = "rio"
-    
-    current_limit_enabled: bool = True
-    current_threshold: amperes = 50
-    current_time: seconds = 0.1
-    current_limit: amperes = 20
-    stall_limit: float = 0.75
-
-    neutral_mode: NeutralModeValue = NeutralModeValue.BRAKE # BRAKE or COAST
-    motor_type: str = "falcon" # falcon or minion
-
-@dataclass(frozen=True)
-class SC_TemplateMotorCurrentConfig:
-    drive_current_threshold: amperes = 60
-    drive_current_time: seconds = 0.1
-    drive_current_limit: amperes = 35
-    drive_open_loop_ramp: seconds = 0.25
-
-    steer_current_threshold: amperes = 40
-    steer_current_time: seconds = 0.1
-    steer_current_limit: amperes = 25
-
-    current_limit_enabled: bool = True
-
-@dataclass(frozen=True)
-class SC_TemplateMotorVelocityControl:
-    power: float
-    speed: revolutions_per_minute
-
-@dataclass
-class SC_TemplateMotorPositionControl:
-    position: float
-    speed: float
-
-@dataclass(frozen=True)
-class SC_TemplateMotorTrapezoidConfig:
-    max_velocity: feet_per_second | degrees_per_second
-    max_acceleration: feet_per_second_squared | degrees_per_second_squared

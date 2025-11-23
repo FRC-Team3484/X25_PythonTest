@@ -10,7 +10,7 @@ from phoenix6.controls import DutyCycleOut, VelocityVoltage
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 from wpimath.units import volts
 
-from FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig, SC_TemplateMotorVelocityControl
+from FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_VelocityControl
 
 
 class VelocityMotor(Subsystem):
@@ -26,8 +26,8 @@ class VelocityMotor(Subsystem):
     '''
     def __init__(
         self, 
-        motor_config: SC_TemplateMotorConfig, 
-        current_config: SC_TemplateMotorCurrentConfig, 
+        motor_config: SC_MotorConfig, 
+        current_config: SC_CurrentConfig, 
         pid_config: SC_PIDConfig, 
         feed_forward_config: SC_LinearFeedForwardConfig,
         gear_ratio: float, 
@@ -40,7 +40,7 @@ class VelocityMotor(Subsystem):
         self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
         self._feed_forward_controller: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(feed_forward_config.S, feed_forward_config.V, feed_forward_config.A)
 
-        self._target_speed: SC_TemplateMotorVelocityControl = SC_TemplateMotorVelocityControl(0.0, 0.0)
+        self._target_speed: SC_VelocityControl = SC_VelocityControl(0.0, 0.0)
 
         self._tolerance: float = tolerance
         self._gear_ratio: float = gear_ratio
@@ -95,14 +95,14 @@ class VelocityMotor(Subsystem):
 
         self.print_diagnostics()
     
-    def set_speed(self, speed: SC_TemplateMotorVelocityControl) -> None:
+    def set_speed(self, speed: SC_VelocityControl) -> None:
         '''
         Sets the target speed for the motor
 
         Parameters:
             - speed (SC_TemplateMotorVelocityControl): The speed and power to set the motor to
         '''
-        self._target_speed = SC_TemplateMotorVelocityControl(speed.speed * self._gear_ratio, speed.power)
+        self._target_speed = SC_VelocityControl(speed.speed * self._gear_ratio, speed.power)
 
     def at_target_speed(self) -> bool:
         '''
@@ -142,7 +142,7 @@ class VelocityMotor(Subsystem):
             - power (float): The power to set the motor to
         '''
         # TODO: Have a boolean for testing mode to disable PID and feed forward
-        self._target_speed = SC_TemplateMotorVelocityControl(0.0, power)
+        self._target_speed = SC_VelocityControl(0.0, power)
 
     def get_stall_percentage(self) -> float:
         '''

@@ -6,7 +6,7 @@ from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFX
 from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
 from wpilib import SmartDashboard
 
-from src.FRC3484_Lib.SC_Datatypes import SC_TemplateMotorConfig, SC_TemplateMotorCurrentConfig
+from src.FRC3484_Lib.SC_Datatypes import SC_MotorConfig, SC_CurrentConfig
 
 class PowerMotor(Subsystem):
     '''
@@ -19,8 +19,8 @@ class PowerMotor(Subsystem):
     '''
     def __init__(
             self, 
-            motor_config: SC_TemplateMotorConfig, 
-            current_config: SC_TemplateMotorCurrentConfig
+            motor_config: SC_MotorConfig, 
+            current_config: SC_CurrentConfig
         ) -> None:
         super().__init__()
         
