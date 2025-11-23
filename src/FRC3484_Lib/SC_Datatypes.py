@@ -162,11 +162,6 @@ class SC_ApriltagTarget:
         blue_ids = list(apriltag_ids)
         red_ids = list(red_apriltag_ids) if red_apriltag_ids is not None else blue_ids
 
-        alliance = DriverStation.getAlliance()
-        if alliance is None:
-            alliance = DriverStation.Alliance.kBlue
-        self._alliance: DriverStation.Alliance = alliance
-
         self._target_poses: dict[DriverStation.Alliance, list[Pose2d]] = {
             DriverStation.Alliance.kBlue: apply_offsets_to_poses(
                 get_april_tag_poses(blue_ids, field_layout),
@@ -179,6 +174,19 @@ class SC_ApriltagTarget:
         }
 
         self._safe_distance: meters = inchesToMeters(safe_distance)
+
+    @property
+    def _alliance(self) -> DriverStation.Alliance:
+        """
+        Returns the current alliance of the robot
+
+        Returns:
+            - DriverStation.Alliance: The current alliance
+        """
+        alliance = DriverStation.getAlliance()
+        if alliance is None:
+            alliance = DriverStation.Alliance.kBlue
+        return alliance
 
     @property
     def targets(self) -> list[Pose2d]:
@@ -210,9 +218,7 @@ class SC_ApriltagTarget:
             - list[Pose2d]: The target poses for the specified alliance
         """
         if alliance is None:
-            alliance = DriverStation.getAlliance()
-        if alliance is None:
-            alliance = DriverStation.Alliance.kBlue
+            alliance = self._alliance
         return self._target_poses[alliance]
 
 
