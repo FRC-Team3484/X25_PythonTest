@@ -164,13 +164,8 @@ class AngularPositionMotor(Subsystem):
         self._state = State.POSITION
         
         if angle != self._target_state.position:
-            # TODO: I can't get the linter to be happy with these, because .position 
-            #     and .velocity are a @property and not a variable. Does this matter?
-            self._target_state.position = angle
-            self._target_state.velocity = 0
-
-            self._initial_state.position = self.get_angle()
-            self._initial_state.velocity = self.get_velocity()
+            self._target_state = TrapezoidProfile.State(angle, 0)
+            self._initial_state = TrapezoidProfile.State(self.get_angle(), self.get_velocity())
 
             self._trapezoid_timer.reset()
 
