@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from wpimath.geometry import Pose2d, Pose3d
-from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
+from robotpy_apriltag import AprilTagFieldLayout
 
 def get_april_tag_poses(april_tag_ids: Iterable[int], layout: AprilTagFieldLayout) -> list[Pose2d]:
     """
