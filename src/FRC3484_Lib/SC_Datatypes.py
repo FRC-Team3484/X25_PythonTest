@@ -5,8 +5,6 @@ from wpimath.units import \
     volts, \
     amperes, \
     revolutions_per_minute, \
-    radians_per_second, \
-    radians_per_second_squared, \
     volt_seconds_per_meter, \
     volt_seconds_squared_per_meter, \
     volt_seconds_per_radian, \
@@ -16,6 +14,9 @@ from wpilib import PneumaticsModuleType
 from wpimath.geometry import Transform3d, Pose2d
 
 from dataclasses import dataclass
+
+volt_seconds_per_rotation = float
+volt_seconds_squared_per_rotation = float
 
 '''
 Motion Control Datatypes
@@ -84,6 +85,7 @@ class SC_SwerveConfig:
     wheel_radius: inches
     drive_gear_ratio: float
     drive_scaling: float = 1.0
+    steer_ratio: float = 12.8
     
     steer_motor_reversed: bool = True
     encoder_reversed: bool = False
@@ -115,8 +117,9 @@ class SC_SteerPIDConfig:
     Kp: float
     Ki: float
     Kd: float
-    max_speed: radians_per_second
-    max_acceleration: radians_per_second_squared
+    V: volt_seconds_per_rotation
+    A: volt_seconds_squared_per_rotation
+    S: volts
 
 '''
 Vision Datatypes
