@@ -6,7 +6,7 @@ from phoenix6.hardware import TalonFX, CANcoder
 from phoenix6.signals import NeutralModeValue, InvertedValue, SensorDirectionValue, FeedbackSensorSourceValue
 
 from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController
-from wpimath.units import meters, turns_per_second, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations
+from wpimath.units import meters, turns_per_second, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations, radiansToRotations
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from wpimath.geometry import Rotation2d
 
@@ -32,13 +32,9 @@ class SwerveModule:
         self._steer_motor: TalonFX = TalonFX(config.steer_can_id, canbus_name)
         self._steer_encoder: CANcoder = CANcoder(config.encoder_can_id, canbus_name)
 
-        self._steer_motor_request: controls.MotionMagicExpoVoltage = controls.MotionMagicExpoVoltage(0, enable_foc=False)
-
-        '''
-        PID Controllers and Feedforwards
-        '''
-        self._drive_pid_controller: PIDController = PIDController(drive_pid_config.Kp, drive_pid_config.Ki, drive_pid_config.Kd)
-        self._drive_feed_forward: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(drive_pid_config.S, drive_pid_config.V, drive_pid_config.A)
+        self._drive_open_loop_request: controls.DutyCycleOut = controls.DutyCycleOut(0.0, enable_foc=False)
+        self._drive_closed_loop_request: controls.VelocityVoltage = controls.VelocityVoltage(0.0, slot=0, enable_foc=False)
+        self._steer_motor_request: controls.MotionMagicExpoVoltage = controls.MotionMagicExpoVoltage(0.0, slot=0, enable_foc=False)
 
         '''
         Motor and Encoder Configurations
@@ -51,6 +47,15 @@ class SwerveModule:
             .with_supply_current_limit(current_config.drive_current_limit) \
             .with_supply_current_lower_limit(current_config.drive_current_threshold) \
             .with_supply_current_lower_time(current_config.drive_current_time)
+        
+        # Configure pid
+        self._drive_motor_config.slot0 = configs.Slot0Configs() \
+            .with_k_p(drive_pid_config.Kp) \
+            .with_k_i(drive_pid_config.Ki) \
+            .with_k_d(drive_pid_config.Kd) \
+            .with_k_v(drive_pid_config.V) \
+            .with_k_a(drive_pid_config.A) \
+            .with_k_s(drive_pid_config.S)
 
         self._drive_motor_config.open_loop_ramps.duty_cycle_open_loop_ramp_period = current_config.drive_open_loop_ramp
         self._drive_motor.configurator.apply(self._drive_motor_config)
@@ -127,11 +132,9 @@ class SwerveModule:
         # In open loop, treat speed as a percent power
         # In closed loop, try to hit the actual speed
         if open_loop:
-            self._drive_motor.set(state.speed)
+            self._drive_motor.set_control(self._drive_open_loop_request.with_output(state.speed))
         else:
-            drive_pid: volts = self._drive_pid_controller.calculate(self._get_wheel_speed('meters'), state.speed)
-            drive_ff: volts = self._drive_feed_forward.calculate(state.speed)
-            self._drive_motor.setVoltage(drive_pid + drive_ff)
+            self._drive_motor.set_control(self._drive_closed_loop_request.with_velocity(radiansToRotations(state.speed / self._WHEEL_RADIUS) * self._DRIVE_GEAR_RATIO / self._DRIVE_SCALING))
 
         self._set_steer(state.angle)
     
@@ -154,7 +157,7 @@ class SwerveModule:
         '''
         Gets the current position of the swerve module
         '''
-        return SwerveModulePosition(self._get_wheel_speed('meters'), self._get_steer_angle())
+        return SwerveModulePosition(self._get_wheel_position('meters'), self._get_steer_angle())
     
     def _get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
         '''

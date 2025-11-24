@@ -52,14 +52,10 @@ class SwerveConstants:
         SC_SwerveCurrentConfig()
     )
 
-    _DRIVE_PID_CONFIG_LEFT = SC_DrivePIDConfig(0.93641, 0.0, 0.0, 2.2903, 0.39229, 0.04423)
-    _DRIVE_PID_CONFIG_RIGHT = SC_DrivePIDConfig(0.92237, 0.0, 0.0, 2.2915, 0.387, 0.041887)
-    DRIVE_PID_CONFIGS: tuple[SC_DrivePIDConfig, ...] = (
-        _DRIVE_PID_CONFIG_LEFT,
-        _DRIVE_PID_CONFIG_RIGHT,
-        _DRIVE_PID_CONFIG_LEFT,
-        _DRIVE_PID_CONFIG_RIGHT,
-    )
+    DRIVE_PID_CONFIGS: tuple[SC_DrivePIDConfig, ...] = tuple([
+        SC_DrivePIDConfig(0.3, 0.0, 0.0, 0.7311, 0.1245, 0.0136)
+        for _ in range(len(MODULE_CONFIGS))
+    ])
 
     STEER_PID_CONFIGS: tuple[SC_SteerPIDConfig, ...] = tuple([
         SC_SteerPIDConfig(100, 0.0, 0.5, 1.91, 0, 0.1)
