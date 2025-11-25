@@ -11,7 +11,7 @@ from phoenix6.hardware import TalonFX, TalonFXS, CANcoder
 from phoenix6.configs import CurrentLimitsConfigs, ExternalFeedbackConfigs, FeedbackConfigs, TalonFXConfiguration, TalonFXSConfiguration
 from phoenix6.signals import ExternalFeedbackSensorSourceValue, FeedbackSensorSourceValue, InvertedValue, MotorArrangementValue, NeutralModeValue
 
-from src.FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_TrapezoidConfig
+from src.FRC3484_Lib.SC_Datatypes import SC_AngularFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_TrapezoidConfig
 
 class State(Enum):
     POWER = 0
@@ -23,7 +23,7 @@ class AngularPositionMotor(Subsystem):
 
     Parameters:
         motor_config: SC_TemplateMotorConfig
-        current_config: SC_TemplateMotorCurrentConfig
+        current_config: SC_AngularFeedForwardConfig
         pid_config: SC_PIDConfig
         feed_forward_config: SC_LinearFeedForwardConfig
         trapezoid_config: SC_TemplateMotorTrapezoidConfig
@@ -39,7 +39,7 @@ class AngularPositionMotor(Subsystem):
             motor_config: SC_MotorConfig,
             current_config: SC_CurrentConfig,
             pid_config: SC_PIDConfig,
-            feed_forward_config: SC_LinearFeedForwardConfig,
+            feed_forward_config: SC_AngularFeedForwardConfig,
             trapezoid_config: SC_TrapezoidConfig,
             angle_tolerance: degrees,
             gear_ratio: float = 1.0,
