@@ -24,6 +24,9 @@ class VelocityMotor(Subsystem):
         - gear_ratio (float): The gear ratio of the motor
         - tolerance (float): The tolerance for the target speed to consider it reached
     '''
+    STALL_LIMIT: float = 0.75
+    STALL_THRESHOLD: float = 0.1
+
     def __init__(
         self, 
         motor_config: SC_MotorConfig, 
@@ -45,7 +48,6 @@ class VelocityMotor(Subsystem):
         self._tolerance: float = tolerance
         self._gear_ratio: float = gear_ratio
         self._motor_name: str = motor_config.motor_name
-        self.stall_limit: float = motor_config.stall_limit
 
         # If the motor_type is minion, it needs a talon FXS controller to be able to set the correct commutation
         # There is no communtation for the falcon, so use a talon FX controller instead
@@ -154,8 +156,8 @@ class VelocityMotor(Subsystem):
         Returns:
             - float: The percentage of stall current being drawn by the motor
         '''
-        if abs(self._motor.get()) > self.stall_limit:
-            return (self._motor.get_supply_current().value / self._motor.get_motor_stall_current().value * abs(self._motor.get()))
+        if abs(self._motor.get()) > self.STALL_THRESHOLD:
+            return (self._motor.get_supply_current().value / (self._motor.get_motor_stall_current().value * self._motor.get_supply_voltage().value / 12.0)) / abs(self._motor.get())
         else:
             return 0
 
@@ -166,7 +168,7 @@ class VelocityMotor(Subsystem):
         Returns:
             - bool: True if the motor is stalled, False otherwise
         '''
-        return self.get_stall_percentage() > self.stall_limit
+        return self.get_stall_percentage() > self.STALL_LIMIT
     
     def print_diagnostics(self) -> None:
         '''

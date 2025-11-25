@@ -31,6 +31,9 @@ class AngularPositionMotor(Subsystem):
         gear_ratio: float = 1.0
         external_encoder: CANcoder | None = None
     '''
+    STALL_LIMIT: float = 0.75
+    STALL_THRESHOLD: float = 0.1
+
     def __init__(
             self,
             motor_config: SC_MotorConfig,
@@ -52,7 +55,6 @@ class AngularPositionMotor(Subsystem):
         self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
         self._feed_forward_controller: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(feed_forward_config.S, feed_forward_config.V, feed_forward_config.A)
         self._motor_name: str = motor_config.motor_name
-        self._stall_limit: float = motor_config.stall_limit
 
         self._trapezoid: TrapezoidProfile = TrapezoidProfile(TrapezoidProfile.Constraints(trapezoid_config.max_velocity, trapezoid_config.max_acceleration))
         self._trapezoid_timer: Timer = Timer()
@@ -115,9 +117,6 @@ class AngularPositionMotor(Subsystem):
         '''
         Handles controlling the motors in position mode and printing diagnostics
         '''
-        # TODO: Should this check for a home position so it can know to 
-        #     stop powering even if we're not using a homing state?
-        # TODO: What was the encoder going to be used for?
         if self._state == State.POSITION:
             current_state = self._trapezoid.calculate(self._trapezoid_timer.get(), self._initial_state, self._target_state)
             feed_forward = self._feed_forward_controller.calculate(self._previous_velocity, current_state.velocity)
@@ -202,8 +201,8 @@ class AngularPositionMotor(Subsystem):
         Returns:
             - float: The percentage of stall current being drawn by the motor
         '''
-        if abs(self._motor.get()) > self._stall_limit:
-            return (self._motor.get_supply_current().value / self._motor.get_motor_stall_current().value * abs(self._motor.get()))
+        if abs(self._motor.get()) > self.STALL_THRESHOLD:
+            return (self._motor.get_supply_current().value / (self._motor.get_motor_stall_current().value * self._motor.get_supply_voltage().value / 12.0)) / abs(self._motor.get())
         else:
             return 0
 
@@ -214,7 +213,7 @@ class AngularPositionMotor(Subsystem):
         Returns:
             - bool: True if the motor is stalled, False otherwise
         '''
-        return self.get_stall_percentage() > self._stall_limit
+        return self.get_stall_percentage() > self.STALL_LIMIT
 
     def print_diagnostics(self) -> None:
         '''

@@ -79,7 +79,6 @@ class SC_MotorConfig:
     current_threshold: amperes = 50
     current_time: seconds = 0.1
     current_limit: amperes = 20
-    stall_limit: float = 0.75
 
 @dataclass(frozen=True)
 class SC_CurrentConfig:
