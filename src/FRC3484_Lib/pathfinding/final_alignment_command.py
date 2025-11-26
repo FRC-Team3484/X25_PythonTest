@@ -17,8 +17,11 @@ class FinalAlignmentCommand(commands2.Command):
         commonly after using pathfinding to roughly reach a pose
     
     Parameters:
-        - drivetrain_subsystem (DrivetrainSubsystem): The drivetrain subsystem
         - target_pose (Pose2d): The target pose
+        - drive_controller (PathFollowingController): The pathplanner drive controller to use for alignment
+        - pose_supplier (Callable[[], Pose2d]): Function to get the robot's current pose
+        - output (Callable[[ChassisSpeeds], None]): Function to output chassis speeds to the drivetrain
+        - drivetrain_subsystem (Subsystem): The drivetrain subsystem for adding command requirements
     """
     def __init__(self, target_pose: Pose2d, drive_controller: PathFollowingController, pose_supplier: Callable[[], Pose2d], output: Callable[[ChassisSpeeds], None], drivetrain_subsystem: commands2.Subsystem, timeout: seconds | None = None) -> None:
         super().__init__()
