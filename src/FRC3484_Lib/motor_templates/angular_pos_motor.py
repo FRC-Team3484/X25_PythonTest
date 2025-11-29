@@ -1,23 +1,23 @@
 from enum import Enum
 from typing import override
 
-from commands2 import Subsystem
 from wpilib import Timer, SmartDashboard
 from wpimath.units import degrees, degrees_per_second
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 from wpimath.trajectory import TrapezoidProfile
 
-from phoenix6.hardware import TalonFX, TalonFXS, CANcoder
-from phoenix6.configs import CurrentLimitsConfigs, ExternalFeedbackConfigs, FeedbackConfigs, TalonFXConfiguration, TalonFXSConfiguration
-from phoenix6.signals import ExternalFeedbackSensorSourceValue, FeedbackSensorSourceValue, InvertedValue, MotorArrangementValue, NeutralModeValue
+from phoenix6.hardware import CANcoder
+from phoenix6.configs import ExternalFeedbackConfigs, FeedbackConfigs
+from phoenix6.signals import ExternalFeedbackSensorSourceValue, FeedbackSensorSourceValue
 
+from src.FRC3484_Lib.motor_templates.power_motor import PowerMotor
 from src.FRC3484_Lib.SC_Datatypes import SC_AngularFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_TrapezoidConfig
 
 class State(Enum):
     POWER = 0
     POSITION = 1
 
-class AngularPositionMotor(Subsystem):
+class AngularPositionMotor(PowerMotor):
     '''
     Defines a base motor class for angular position control
 
@@ -45,13 +45,11 @@ class AngularPositionMotor(Subsystem):
             gear_ratio: float = 1.0,
             external_encoder: CANcoder | None = None
         ) -> None:
-        super().__init__()
+        super().__init__(motor_config, current_config)
 
         # Set up variables
         self._state: State = State.POWER
 
-        self._motor: TalonFX | TalonFXS
-        self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
         self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
         self._feed_forward_controller: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(feed_forward_config.S, feed_forward_config.V, feed_forward_config.A)
         self._motor_name: str = motor_config.motor_name
@@ -73,23 +71,14 @@ class AngularPositionMotor(Subsystem):
 
         # If the motor_type is minion, it needs a talon FXS controller to be able to set the correct commutation
         # There is no communtation for the falcon, so use a talon FX controller instead
+        # The portion for the external encoder is here, but the rest of the configuration is in the PowerMotor class
         if motor_config.motor_type == "minion":
-            self._motor = TalonFXS(motor_config.can_id, motor_config.can_bus_name)
-
-            self._motor_config = TalonFXSConfiguration()
-
-            self._motor_config.commutation.motor_arrangement = MotorArrangementValue.MINION_JST
-
             if self._encoder is not None:
                 self._motor_config.external_feedback = ExternalFeedbackConfigs() \
                     .with_feedback_remote_sensor_id(self._encoder.device_id) \
                     .with_external_feedback_sensor_source(ExternalFeedbackSensorSourceValue.REMOTE_CANCODER)
 
         elif motor_config.motor_type == "falcon":
-            self._motor = TalonFX(motor_config.can_id, motor_config.can_bus_name)
-
-            self._motor_config = TalonFXConfiguration()
-
             if self._encoder is not None:
                 self._motor_config.feedback = FeedbackConfigs() \
                     .with_feedback_remote_sensor_id(self._encoder.device_id) \
@@ -97,20 +86,9 @@ class AngularPositionMotor(Subsystem):
         else:
             raise ValueError(f"Invalid motor type: {motor_config.motor_type}")
 
-        self._motor_config.motor_output.inverted = InvertedValue(motor_config.inverted)
-
-        self._motor_config.motor_output.neutral_mode = motor_config.neutral_mode
-
-        self._motor_config.current_limits = CurrentLimitsConfigs() \
-            .with_supply_current_limit_enable(current_config.current_limit_enabled) \
-            .with_supply_current_limit(current_config.drive_current_limit) \
-            .with_supply_current_lower_limit(current_config.drive_current_threshold) \
-            .with_supply_current_lower_time(current_config.drive_current_time)
-
         _ = self._motor.configurator.apply(self._motor_config)        
 
         self._trapezoid_timer.start()
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
 
     @override
     def periodic(self) -> None:
@@ -180,47 +158,12 @@ class AngularPositionMotor(Subsystem):
 
             self._trapezoid_timer.reset()
 
-    def set_brake_mode(self) -> None:
-        '''
-        Sets the motor to brake mode
-        '''
-        self._motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
-        _ = self._motor.configurator.apply(self._motor_config)
-
-    def set_coast_mode(self) -> None:
-        '''
-        Sets the motor to coast mode
-        '''
-        self._motor_config.motor_output.neutral_mode = NeutralModeValue.COAST
-        _ = self._motor.configurator.apply(self._motor_config)
-
-    def get_stall_percentage(self) -> float:
-        '''
-        Returns the percentage of stall current being drawn by the motor
-
-        Returns:
-            - float: The percentage of stall current being drawn by the motor
-        '''
-        if abs(self._motor.get()) > self.STALL_THRESHOLD:
-            return (self._motor.get_supply_current().value / (self._motor.get_motor_stall_current().value * self._motor.get_supply_voltage().value / 12.0)) / abs(self._motor.get())
-        else:
-            return 0
-
-    def get_stalled(self) -> bool:
-        '''
-        Returns whether the motor is stalled or not
-
-        Returns:
-            - bool: True if the motor is stalled, False otherwise
-        '''
-        return self.get_stall_percentage() > self.STALL_LIMIT
-
+    @override
     def print_diagnostics(self) -> None:
         '''
         Prints diagnostic information to Smart Dashboard
         '''
         _ = SmartDashboard.putNumber(f"{self._motor_name} Angle (degrees)", self.get_angle())
         _ = SmartDashboard.putNumber(f"{self._motor_name} Velocity", self.get_velocity())
-        _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
         _ = SmartDashboard.putBoolean(f"{self._motor_name} At Target Angle", self.at_target_angle())
+        super().print_diagnostics()

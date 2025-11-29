@@ -4,8 +4,8 @@ from wpilib import SmartDashboard
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 from wpimath.units import volts
 
-from FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_VelocityControl
-from FRC3484_Lib.motor_templates.power_motor import PowerMotor
+from src.FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_VelocityControl
+from src.FRC3484_Lib.motor_templates.power_motor import PowerMotor
 
 
 class VelocityMotor(PowerMotor):
