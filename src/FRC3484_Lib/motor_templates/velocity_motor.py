@@ -1,19 +1,14 @@
 from typing import override
 
 from wpilib import SmartDashboard
-from commands2.subsystem import Subsystem
-
-from phoenix6.configs import CurrentLimitsConfigs, TalonFXConfiguration, TalonFXSConfiguration
-from phoenix6.hardware import TalonFX, TalonFXS
-from phoenix6.signals import InvertedValue, MotorArrangementValue, NeutralModeValue
-from phoenix6.controls import DutyCycleOut, VelocityVoltage
 from wpimath.controller import PIDController, SimpleMotorFeedforwardMeters
 from wpimath.units import volts
 
 from FRC3484_Lib.SC_Datatypes import SC_LinearFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_VelocityControl
+from FRC3484_Lib.motor_templates.power_motor import PowerMotor
 
 
-class VelocityMotor(Subsystem):
+class VelocityMotor(PowerMotor):
     '''
     Creates a motor template class that represents a motor that can be set to a target speed
 
@@ -36,10 +31,8 @@ class VelocityMotor(Subsystem):
         gear_ratio: float, 
         tolerance: float
     ) -> None:
-        super().__init__()
+        super().__init__(motor_config, current_config)
 
-        self._motor: TalonFX | TalonFXS
-        self._motor_config: TalonFXConfiguration | TalonFXSConfiguration
         self._pid_controller: PIDController = PIDController(pid_config.Kp, pid_config.Ki, pid_config.Kd)
         self._feed_forward_controller: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(feed_forward_config.S, feed_forward_config.V, feed_forward_config.A)
 
@@ -48,36 +41,6 @@ class VelocityMotor(Subsystem):
         self._tolerance: float = tolerance
         self._gear_ratio: float = gear_ratio
         self._motor_name: str = motor_config.motor_name
-
-        # If the motor_type is minion, it needs a talon FXS controller to be able to set the correct commutation
-        # There is no communtation for the falcon, so use a talon FX controller instead
-        if motor_config.motor_type == "minion":
-            self._motor = TalonFXS(motor_config.can_id, motor_config.can_bus_name)
-
-            self._motor_config = TalonFXSConfiguration()
-
-            self._motor_config.commutation.motor_arrangement = MotorArrangementValue.MINION_JST
-
-        elif motor_config.motor_type == "falcon":
-            self._motor = TalonFX(motor_config.can_id, motor_config.can_bus_name)
-
-            self._motor_config = TalonFXConfiguration()
-        else:
-            raise ValueError(f"Invalid motor type: {motor_config.motor_type}")
-
-        self._motor_config.motor_output.inverted = InvertedValue(motor_config.inverted)
-
-        self._motor_config.motor_output.neutral_mode = motor_config.neutral_mode
-
-        self._motor_config.current_limits = CurrentLimitsConfigs() \
-            .with_supply_current_limit_enable(current_config.current_limit_enabled) \
-            .with_supply_current_limit(current_config.drive_current_limit) \
-            .with_supply_current_lower_limit(current_config.drive_current_threshold) \
-            .with_supply_current_lower_time(current_config.drive_current_time)
-
-        _ = self._motor.configurator.apply(self._motor_config)
-
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Diagnostics", False)
 
     @override
     def periodic(self) -> None:
@@ -125,20 +88,7 @@ class VelocityMotor(Subsystem):
         # Convert RPS to RPM, then subtract the target speed and compare to the tolerance
         return abs((self._motor.get_velocity().value * 60) - self._target_speed.speed) < self._tolerance
 
-    def set_brake_mode(self) -> None:
-        '''
-        Sets the motor to brake mode
-        '''
-        self._motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
-        _ = self._motor.configurator.apply(self._motor_config)
-
-    def set_coast_mode(self) -> None:
-        '''
-        Sets the motor to coast mode
-        '''
-        self._motor_config.motor_output.neutral_mode = NeutralModeValue.COAST
-        _ = self._motor.configurator.apply(self._motor_config)
-
+    @override
     def set_power(self, power: float) -> None:
         '''
         Sets the power of the motor for testing purposes
@@ -147,37 +97,14 @@ class VelocityMotor(Subsystem):
             - power (float): The power to set the motor to
         '''
         # TODO: Have a boolean for testing mode to disable PID and feed forward
+        # TODO: Should this really override the set_speed method from PowerMotor?
         self._target_speed = SC_VelocityControl(0.0, power)
-
-    def get_stall_percentage(self) -> float:
-        '''
-        Returns the percentage of stall current being drawn by the motor
-
-        Returns:
-            - float: The percentage of stall current being drawn by the motor
-        '''
-        if abs(self._motor.get()) > self.STALL_THRESHOLD:
-            return (self._motor.get_supply_current().value / (self._motor.get_motor_stall_current().value * self._motor.get_supply_voltage().value / 12.0)) / abs(self._motor.get())
-        else:
-            return 0
-
-    def get_stalled(self) -> bool:
-        '''
-        Returns whether the motor is stalled or not
-
-        Returns:
-            - bool: True if the motor is stalled, False otherwise
-        '''
-        return self.get_stall_percentage() > self.STALL_LIMIT
     
+    @override
     def print_diagnostics(self) -> None:
         '''
         Prints diagnostic information to Smart Dashboard
         '''
         _ = SmartDashboard.putNumber(f"{self._motor_name} Speed (RPM)", self._motor.get_velocity().value * 60)
         _ = SmartDashboard.putNumber(f"{self._motor_name} At Target RPM", self.at_target_speed())
-        _ = SmartDashboard.putNumber(f"{self._motor_name} Power (%)", self._motor.get() * 100)
-        _ = SmartDashboard.putNumber(f"{self._motor_name} Stall Percentage", self.get_stall_percentage())
-        _ = SmartDashboard.putBoolean(f"{self._motor_name} Stalled", self.get_stalled())
-
-    
+        super().print_diagnostics()
