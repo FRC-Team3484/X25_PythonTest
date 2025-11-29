@@ -11,7 +11,7 @@ from phoenix6.configs import ExternalFeedbackConfigs, FeedbackConfigs
 from phoenix6.signals import ExternalFeedbackSensorSourceValue, FeedbackSensorSourceValue
 
 from src.FRC3484_Lib.motor_templates.power_motor import PowerMotor
-from src.FRC3484_Lib.SC_Datatypes import SC_AngularFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_TrapezoidConfig
+from src.FRC3484_Lib.SC_Datatypes import SC_AngularFeedForwardConfig, SC_LinearFeedForwardConfig, SC_PIDConfig, SC_MotorConfig, SC_CurrentConfig, SC_TrapezoidConfig
 
 class State(Enum):
     POWER = 0
@@ -23,9 +23,9 @@ class AngularPositionMotor(PowerMotor):
 
     Parameters:
         motor_config: SC_TemplateMotorConfig
-        current_config: SC_AngularFeedForwardConfig
+        current_config: SC_CurrentConfig
         pid_config: SC_PIDConfig
-        feed_forward_config: SC_LinearFeedForwardConfig
+        feed_forward_config: SC_AngularFeedForwardConfig
         trapezoid_config: SC_TemplateMotorTrapezoidConfig
         angle_tolerance: degrees
         gear_ratio: float = 1.0
@@ -39,7 +39,7 @@ class AngularPositionMotor(PowerMotor):
             motor_config: SC_MotorConfig,
             current_config: SC_CurrentConfig,
             pid_config: SC_PIDConfig,
-            feed_forward_config: SC_AngularFeedForwardConfig,
+            feed_forward_config: SC_AngularFeedForwardConfig | SC_LinearFeedForwardConfig,
             trapezoid_config: SC_TrapezoidConfig,
             angle_tolerance: degrees,
             gear_ratio: float = 1.0,
