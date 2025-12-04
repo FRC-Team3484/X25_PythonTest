@@ -1,5 +1,5 @@
 import sys
-from typing import Literal, cast
+from typing import Literal
 
 from phoenix6.hardware import Pigeon2
 from phoenix6.configs import Pigeon2Configuration
@@ -11,7 +11,7 @@ from wpimath.units import radians_per_second, meters_per_second, degreesToRadian
 from wpimath.kinematics import SwerveDrive4Kinematics, ChassisSpeeds, SwerveModuleState, SwerveModulePosition
 from wpimath.estimator import SwerveDrive4PoseEstimator
 from wpimath.geometry import Rotation2d, Pose2d, Translation2d
-from wpilib import SmartDashboard, Field2d, DriverStation, SendableChooser
+from wpilib import SmartDashboard, Field2d, DriverStation
 from wpilib.sysid import SysIdRoutineLog
 
 from commands2 import Command, Subsystem
