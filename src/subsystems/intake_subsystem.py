@@ -1,50 +1,42 @@
-from src.constants import IntakeConstants
-from src.FRC3484_Lib.SC_Datatypes import SC_SwerveCurrentConfig
-
+from commands2 import Subsystem
 from wpilib import DigitalInput, SmartDashboard
 
-
-from commands2 import Subsystem
 from phoenix6.hardware import TalonFXS
 from phoenix6.configs import TalonFXSConfiguration, CurrentLimitsConfigs
 from phoenix6.signals import InvertedValue, NeutralModeValue, MotorArrangementValue
 
+from src.FRC3484_Lib.SC_Datatypes import SC_MotorConfig
+
 class IntakeSubsystem(Subsystem):
     def __init__(
             self,
-            motor_can_id: int,
+            motor_config: SC_MotorConfig,
             algae_top_sensor_di_ch: int,
             algae_bottom_sensor_di_ch: int,
             coral_high_sensor_di_ch: int,
             coral_low_sensor_di_ch: int
-        ) -> None:
+            ) -> None:
 
         super().__init__()
-        self._intake_motor: TalonFXS = TalonFXS(motor_can_id)
+        self._intake_motor: TalonFXS = TalonFXS(motor_config.can_id, motor_config.can_bus_name)
+        
+        intake_motor_config: TalonFXSConfiguration = TalonFXSConfiguration()
+        intake_motor_config.commutation.motor_arrangement = MotorArrangementValue.MINION_JST
+        intake_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
+        intake_motor_config.motor_output.inverted = InvertedValue(motor_config.inverted)
+        intake_motor_config.current_limits = CurrentLimitsConfigs() \
+            .with_supply_current_limit_enable(motor_config.current_limit_enabled) \
+            .with_supply_current_limit(motor_config.current_limit) \
+            .with_supply_current_lower_limit(motor_config.current_threshold) \
+            .with_supply_current_lower_time(motor_config.current_time)
+        
+        self._intake_motor.configurator.apply(intake_motor_config)
+        
+
         self._algae_top_sensor: DigitalInput = DigitalInput(algae_top_sensor_di_ch)
         self._algae_bottom_sensor: DigitalInput = DigitalInput(algae_bottom_sensor_di_ch)
         self._coral_high_sensor: DigitalInput = DigitalInput(coral_high_sensor_di_ch)
         self._coral_low_sensor: DigitalInput = DigitalInput(coral_low_sensor_di_ch)
-        
-        motor_config: TalonFXSConfiguration = TalonFXSConfiguration()
-        motor_config.motor_output.inverted = InvertedValue(IntakeConstants.INVERT_MOTOR)
-        motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
-        motor_config.commutation.motor_arrangement = MotorArrangementValue.MINION_JST
-
-        intake_current_constants: SC_SwerveCurrentConfig = SC_SwerveCurrentConfig()
-
-        steer_current_limit: CurrentLimitsConfigs = CurrentLimitsConfigs()
-
-        steer_current_limit \
-            .with_supply_current_limit_enable(intake_current_constants.current_limit_enabled) \
-            .with_supply_current_limit(intake_current_constants.steer_current_limit) \
-            .with_supply_current_lower_limit(intake_current_constants.steer_current_threshold) \
-            .with_supply_current_lower_time(intake_current_constants.steer_current_time)
-
-        motor_config.current_limits = steer_current_limit
-
-        self._intake_motor.configurator.apply(motor_config)
-
     
     def periodic(self) -> None:
         pass

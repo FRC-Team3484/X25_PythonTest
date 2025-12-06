@@ -167,7 +167,14 @@ class VisionConstants:
     )
 
 class IntakeConstants:
-    MOTOR_CAN_ID: int = 40
+    MOTOR_CONFIG: SC_MotorConfig = SC_MotorConfig(
+        40,
+        current_limit_enabled=True,
+        current_limit=20,
+        current_threshold=30,
+        current_time=0.1
+    )
+    
     ALGAE_TOP_SENSOR_DI_CH: int = 2
     ALGAE_BOTTOM_SENSOR_DI_CH: int = 5
     CORAL_HIGH_SENSOR_DI_CH: int = 1
@@ -177,8 +184,6 @@ class IntakeConstants:
     ALGAE_EJECT_POWER: float = 0.8
     STOP_POWER: float = 0.0
     INTAKE_POWER : float = -0.8
-    
-    INVERT_MOTOR: bool = False
 
 class PathfindingConstants:
     FINAL_ALIGNMENT_DISTANCE: inches = 6.0
