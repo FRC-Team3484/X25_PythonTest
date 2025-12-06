@@ -173,7 +173,7 @@ class SC_ApriltagTarget:
             )
         }
 
-        self._safe_distance: meters = inchesToMeters(safe_distance)
+        self._safe_distance: inches = safe_distance
 
     @property
     def _alliance(self) -> DriverStation.Alliance:
@@ -198,12 +198,12 @@ class SC_ApriltagTarget:
         return self._target_poses[self._alliance]
     
     @property
-    def safe_distance(self) -> meters:
+    def safe_distance(self) -> inches:
         """
         Returns the safe distance to maintain from the target
 
         Returns:
-            - meters: The safe distance
+            - inches: The safe distance
         """
         return self._safe_distance
 
