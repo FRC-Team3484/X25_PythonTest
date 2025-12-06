@@ -166,6 +166,20 @@ class VisionConstants:
         )
     )
 
+class IntakeConstants:
+    MOTOR_CAN_ID: int = 40
+    ALGAE_TOP_SENSOR_DI_CH: int = 2
+    ALGAE_BOTTOM_SENSOR_DI_CH: int = 5
+    CORAL_HIGH_SENSOR_DI_CH: int = 1
+    CORAL_LOW_SENSOR_DI_CH: int = 3
+    
+    CORAL_EJECT_POWER: float = -0.7
+    ALGAE_EJECT_POWER: float = 0.8
+    STOP_POWER: float = 0.0
+    INTAKE_POWER : float = -0.8
+    
+    INVERT_MOTOR: bool = False
+
 class PathfindingConstants:
     FINAL_ALIGNMENT_DISTANCE: inches = 6.0
 
