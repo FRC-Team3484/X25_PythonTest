@@ -101,7 +101,7 @@ class SC_Pathfinding:
         """
         return AutoBuilder.pathfindToPose(target, PathfindingCommandConstants.PATH_CONSTRAINTS, 0.0)
     
-    def pathfind_to_pose(self, target_pose: Pose2d, defer: bool = False) -> commands2.Command:
+    def pathfind_to_pose(self, target_pose: Pose2d, safe_distance: inches = 999, defer: bool = False) -> commands2.Command:
         """
         Returns a command that creates a path to drive to the given target pose.
         This command is safe for use in autonomous
@@ -116,13 +116,13 @@ class SC_Pathfinding:
         if defer: return commands2.DeferredCommand(lambda: self.pathfind_to_pose(target_pose, defer=False))
 
         start_pose: Pose2d = self._pose_supplier()
-        if target_pose.relativeTo(start_pose).translation().norm() < PathfindingCommandConstants.FINAL_ALIGNMENT_DISTANCE:
+        if target_pose.relativeTo(start_pose).translation().norm() < inchesToMeters(safe_distance):
             drive_command: commands2.Command = self.get_pathfollow_command(start_pose, target_pose)
         else:
             drive_command: commands2.Command = self.get_pathfind_command(target_pose)
 
         return commands2.SequentialCommandGroup(
-            commands2.ParallelCommandGroup(
+            commands2.ParallelRaceGroup(
                 drive_command,
                 self.get_near_pose_command(target_pose, PathfindingCommandConstants.FINAL_ALIGNMENT_DISTANCE)
             ),
@@ -141,4 +141,4 @@ class SC_Pathfinding:
         Returns:
             - Command: The command to drive to the nearest point on the target
         """
-        return self.pathfind_to_pose(target.get_nearest(self._pose_supplier()), defer=defer)
+        return self.pathfind_to_pose(target.get_nearest(self._pose_supplier()), safe_distance=target.safe_distance, defer=defer)
