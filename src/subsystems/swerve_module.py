@@ -146,7 +146,7 @@ class SwerveModule:
         '''
         Gets the current position of the swerve module
         '''
-        return SwerveModulePosition(self._get_wheel_speed('meters'), self._get_steer_angle())
+        return SwerveModulePosition(self._get_wheel_position('meters'), self._get_steer_angle())
     
     def _get_wheel_speed(self, distance_units: Literal['feet', 'meters'] = 'meters') -> float:
         '''
