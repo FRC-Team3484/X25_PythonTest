@@ -1,13 +1,12 @@
 import math
 from typing import Literal
 
+from phoenix6 import configs, controls
 from phoenix6.hardware import TalonFX, CANcoder
-from phoenix6.configs import TalonFXConfiguration, CANcoderConfiguration, CurrentLimitsConfigs, MagnetSensorConfigs
-from phoenix6.signals import NeutralModeValue, InvertedValue, SensorDirectionValue
+from phoenix6.signals import NeutralModeValue, InvertedValue, SensorDirectionValue, FeedbackSensorSourceValue
 
-from wpimath.trajectory import TrapezoidProfileRadians
-from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController, ProfiledPIDControllerRadians
-from wpimath.units import meters, turns_per_second, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations
+from wpimath.controller import SimpleMotorFeedforwardMeters, PIDController
+from wpimath.units import meters, turns_per_second, volts, metersToFeet, metersToInches, inchesToMeters, rotationsToRadians, degreesToRotations, radiansToRotations
 from wpimath.kinematics import SwerveModuleState, SwerveModulePosition
 from wpimath.geometry import Rotation2d
 
@@ -33,31 +32,30 @@ class SwerveModule:
         self._steer_motor: TalonFX = TalonFX(config.steer_can_id, canbus_name)
         self._steer_encoder: CANcoder = CANcoder(config.encoder_can_id, canbus_name)
 
-        '''
-        PID Controllers and Feedforwards
-        '''
-        self._drive_pid_controller: PIDController = PIDController(drive_pid_config.Kp, drive_pid_config.Ki, drive_pid_config.Kd)
-        self._drive_feed_forward: SimpleMotorFeedforwardMeters = SimpleMotorFeedforwardMeters(drive_pid_config.S, drive_pid_config.V, drive_pid_config.A)
-
-        self._steer_pid_controller: ProfiledPIDControllerRadians = ProfiledPIDControllerRadians(
-            steer_pid_config.Kp,
-            steer_pid_config.Ki,
-            steer_pid_config.Kd,
-            TrapezoidProfileRadians.Constraints(steer_pid_config.max_speed, steer_pid_config.max_acceleration)
-        )
-        self._steer_pid_controller.enableContinuousInput(-math.pi, math.pi)
+        self._drive_open_loop_request: controls.DutyCycleOut = controls.DutyCycleOut(0.0, enable_foc=False)
+        self._drive_closed_loop_request: controls.VelocityVoltage = controls.VelocityVoltage(0.0, slot=0, enable_foc=False)
+        self._steer_motor_request: controls.MotionMagicExpoVoltage = controls.MotionMagicExpoVoltage(0.0, slot=0, enable_foc=False)
 
         '''
         Motor and Encoder Configurations
         '''
         
         # Drive Motor Config
-        self._drive_motor_config: TalonFXConfiguration = TalonFXConfiguration()
-        self._drive_motor_config.current_limits = CurrentLimitsConfigs() \
+        self._drive_motor_config: configs.TalonFXConfiguration = configs.TalonFXConfiguration()
+        self._drive_motor_config.current_limits = configs.CurrentLimitsConfigs() \
             .with_supply_current_limit_enable(current_config.current_limit_enabled) \
             .with_supply_current_limit(current_config.drive_current_limit) \
             .with_supply_current_lower_limit(current_config.drive_current_threshold) \
             .with_supply_current_lower_time(current_config.drive_current_time)
+        
+        # Configure pid
+        self._drive_motor_config.slot0 = configs.Slot0Configs() \
+            .with_k_p(drive_pid_config.Kp) \
+            .with_k_i(drive_pid_config.Ki) \
+            .with_k_d(drive_pid_config.Kd) \
+            .with_k_v(drive_pid_config.V) \
+            .with_k_a(drive_pid_config.A) \
+            .with_k_s(drive_pid_config.S)
 
         self._drive_motor_config.open_loop_ramps.duty_cycle_open_loop_ramp_period = current_config.drive_open_loop_ramp
         self._drive_motor.configurator.apply(self._drive_motor_config)
@@ -65,20 +63,37 @@ class SwerveModule:
         self.reset_encoder()
 
         # Steer Motor Config
-        self._steer_motor_config: TalonFXConfiguration = TalonFXConfiguration()
-        self._steer_motor_config.current_limits = CurrentLimitsConfigs() \
+        self._steer_motor_config: configs.TalonFXConfiguration = configs.TalonFXConfiguration()
+        self._steer_motor_config.current_limits = configs.CurrentLimitsConfigs() \
             .with_supply_current_limit_enable(current_config.current_limit_enabled) \
             .with_supply_current_limit(current_config.steer_current_limit) \
             .with_supply_current_lower_limit(current_config.steer_current_threshold) \
             .with_supply_current_lower_time(current_config.steer_current_time)
+        
+        # Configure the steer motor to use the CANcoder as its feedback device
+        self._steer_motor_config.feedback.feedback_remote_sensor_id = self._steer_encoder.device_id
+        self._steer_motor_config.feedback.feedback_sensor_source = FeedbackSensorSourceValue.REMOTE_CANCODER
+        self._steer_motor_config.feedback.rotor_to_sensor_ratio = config.steer_ratio
+        self._steer_motor_config.closed_loop_general.continuous_wrap = True
+
+        # Configure pid and motion magic
+        self._steer_motor_config.slot0 = configs.Slot0Configs() \
+            .with_k_p(steer_pid_config.Kp) \
+            .with_k_i(steer_pid_config.Ki) \
+            .with_k_d(steer_pid_config.Kd) \
+            .with_k_v(steer_pid_config.V) \
+            .with_k_a(steer_pid_config.A) \
+            .with_k_s(steer_pid_config.S)
+        self._steer_motor_config.motion_magic.motion_magic_expo_k_v = 0.12 * config.steer_ratio
+        self._steer_motor_config.motion_magic.motion_magic_expo_k_a *= 0.8 / config.steer_ratio
 
         self._steer_motor_config.motor_output.inverted = InvertedValue(config.steer_motor_reversed)
         self._steer_motor_config.motor_output.neutral_mode = NeutralModeValue.BRAKE
         self._steer_motor.configurator.apply(self._steer_motor_config)
 
         # Encoder Config
-        self._encoder_config: CANcoderConfiguration = CANcoderConfiguration()
-        self._encoder_config.magnet_sensor = MagnetSensorConfigs() \
+        self._encoder_config: configs.CANcoderConfiguration = configs.CANcoderConfiguration()
+        self._encoder_config.magnet_sensor = configs.MagnetSensorConfigs() \
             .with_magnet_offset(degreesToRotations(config.encoder_offset)) \
             .with_sensor_direction(SensorDirectionValue(config.encoder_reversed)) \
             .with_absolute_sensor_discontinuity_point(0.5)
@@ -117,11 +132,9 @@ class SwerveModule:
         # In open loop, treat speed as a percent power
         # In closed loop, try to hit the actual speed
         if open_loop:
-            self._drive_motor.set(state.speed)
+            self._drive_motor.set_control(self._drive_open_loop_request.with_output(state.speed))
         else:
-            drive_pid: volts = self._drive_pid_controller.calculate(self._get_wheel_speed('meters'), state.speed)
-            drive_ff: volts = self._drive_feed_forward.calculate(state.speed)
-            self._drive_motor.setVoltage(drive_pid + drive_ff)
+            self._drive_motor.set_control(self._drive_closed_loop_request.with_velocity(radiansToRotations(state.speed / self._WHEEL_RADIUS) * self._DRIVE_GEAR_RATIO / self._DRIVE_SCALING))
 
         self._set_steer(state.angle)
     
@@ -132,9 +145,7 @@ class SwerveModule:
         Parameters:
             - angle (Rotation2d): The angle to set the steer motor to
         '''
-        encoder_rotation: Rotation2d = self._get_steer_angle()
-        steer_pid: float = self._steer_pid_controller.calculate(encoder_rotation.radians(), angle.radians())
-        self._steer_motor.set(steer_pid)
+        self._steer_motor.set_control(self._steer_motor_request.with_position(angle.degrees() / 360.0))
 
     def get_state(self) -> SwerveModuleState:
         '''

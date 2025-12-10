@@ -43,10 +43,10 @@ class SwerveConstants:
     )
 
     MODULE_CONFIGS: tuple[SC_SwerveConfig, ...] = (
-        SC_SwerveConfig(12, 13, 18, 27.685546875, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
-        SC_SwerveConfig(10, 11, 19, 12.83203125, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
-        SC_SwerveConfig(16, 17, 21, 38.759765625, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
-        SC_SwerveConfig(14, 15, 20, 24.9609375, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING),
+        SC_SwerveConfig(12, 13, 18, 27.685546875, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING, STEER_RATIO),
+        SC_SwerveConfig(10, 11, 19, 12.83203125, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING, STEER_RATIO),
+        SC_SwerveConfig(16, 17, 21, 38.759765625, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING, STEER_RATIO),
+        SC_SwerveConfig(14, 15, 20, 24.9609375, WHEEL_RADIUS, GEAR_RATIO, DRIVE_SCALING, STEER_RATIO),
     )
 
     MODULE_CURRENTS: tuple[SC_SwerveCurrentConfig, ...] = (
@@ -56,17 +56,13 @@ class SwerveConstants:
         SC_SwerveCurrentConfig()
     )
 
-    _DRIVE_PID_CONFIG_LEFT = SC_DrivePIDConfig(0.93641, 0.0, 0.0, 2.2903, 0.39229, 0.04423)
-    _DRIVE_PID_CONFIG_RIGHT = SC_DrivePIDConfig(0.92237, 0.0, 0.0, 2.2915, 0.387, 0.041887)
-    DRIVE_PID_CONFIGS: tuple[SC_DrivePIDConfig, ...] = (
-        _DRIVE_PID_CONFIG_LEFT,
-        _DRIVE_PID_CONFIG_RIGHT,
-        _DRIVE_PID_CONFIG_LEFT,
-        _DRIVE_PID_CONFIG_RIGHT,
-    )
+    DRIVE_PID_CONFIGS: tuple[SC_DrivePIDConfig, ...] = tuple([
+        SC_DrivePIDConfig(0.3, 0.0, 0.0, 0.7311, 0.1245, 0.0136)
+        for _ in range(len(MODULE_CONFIGS))
+    ])
 
     STEER_PID_CONFIGS: tuple[SC_SteerPIDConfig, ...] = tuple([
-        SC_SteerPIDConfig(0.5, 0.0, 0.0, 12, 100)
+        SC_SteerPIDConfig(100, 0.0, 0.5, 1.91, 0, 0.1)
         for _ in range(len(MODULE_CONFIGS))
     ])
 
