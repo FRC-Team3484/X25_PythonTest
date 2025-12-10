@@ -1,11 +1,13 @@
-from typing import override
+from typing import Callable
 
 import commands2
+from wpilib import Timer
 from wpimath.geometry import Pose2d
+from wpimath.units import seconds
+from wpimath.kinematics import ChassisSpeeds
 
 from pathplannerlib.controller import PathFollowingController, PathPlannerTrajectoryState
 
-from src.subsystems.drivetrain_subsystem import DrivetrainSubsystem
 from src.FRC3484_Lib.pathfinding.pathfinding_constants import FinalAlignmentCommandConstants
 
 class FinalAlignmentCommand(commands2.Command):
@@ -15,40 +17,40 @@ class FinalAlignmentCommand(commands2.Command):
         commonly after using pathfinding to roughly reach a pose
     
     Parameters:
-        - drivetrain_subsystem (DrivetrainSubsystem): The drivetrain subsystem
         - target_pose (Pose2d): The target pose
+        - drive_controller (PathFollowingController): The pathplanner drive controller to use for alignment
+        - pose_supplier (Callable[[], Pose2d]): Function to get the robot's current pose
+        - output (Callable[[ChassisSpeeds], None]): Function to output chassis speeds to the drivetrain
+        - drivetrain_subsystem (Subsystem): The drivetrain subsystem for adding command requirements
     """
-    def __init__(self, drivetrain_subsystem: DrivetrainSubsystem, target_pose: Pose2d, drive_controller: PathFollowingController) -> None:
+    def __init__(self, target_pose: Pose2d, drive_controller: PathFollowingController, pose_supplier: Callable[[], Pose2d], output: Callable[[ChassisSpeeds], None], drivetrain_subsystem: commands2.Subsystem, timeout: seconds | None = None) -> None:
         super().__init__()
         self.addRequirements(drivetrain_subsystem)
-        self.drivetrain_subsystem: DrivetrainSubsystem = drivetrain_subsystem
-        self.goal_state: PathPlannerTrajectoryState = PathPlannerTrajectoryState(pose=target_pose)
+        self._pose_supplier: Callable[[], Pose2d] = pose_supplier
+        self._output: Callable[[ChassisSpeeds], None] = output
+        self._goal_state: PathPlannerTrajectoryState = PathPlannerTrajectoryState(pose=target_pose)
 
-        self.drive_controller: PathFollowingController = drive_controller
-        self.counter: int = 0
+        self._drive_controller: PathFollowingController = drive_controller
+        self._timeout: seconds = timeout if timeout is not None else FinalAlignmentCommandConstants.FINAL_ALIGN_EXIT
+        self._timer: Timer = Timer()
 
-    @override
     def initialize(self) -> None:
-        self.counter = 0
+        self._timer.reset()
+        self._timer.start()
 
-    @override
     def execute(self) -> None:
-        self.counter += 1
-
-        self.drivetrain_subsystem.drive_robotcentric(
-            self.drive_controller.calculateRobotRelativeSpeeds(
-                self.drivetrain_subsystem.get_pose(), 
-                self.goal_state
-            ), 
-            open_loop=False
+        self._output(
+            self._drive_controller.calculateRobotRelativeSpeeds(
+                self._pose_supplier(), 
+                self._goal_state
+            )
         )
 
-    @override
     def end(self, interrupted: bool) -> None:
-        self.drivetrain_subsystem.stop_motors()
+        self._output(ChassisSpeeds(0.0, 0.0, 0.0))
+        self._timer.stop()
     
-    @override
     def isFinished(self) -> bool:
-        return self.counter >= FinalAlignmentCommandConstants.FINAL_ALIGN_EXIT or \
-            (self.drivetrain_subsystem.get_pose().translation().distance(self.goal_state.pose.translation()) < FinalAlignmentCommandConstants.FINAL_POSE_TOLERANCE and \
-            abs(self.drivetrain_subsystem.get_pose().rotation().degrees() - self.goal_state.pose.rotation().degrees()) < FinalAlignmentCommandConstants.FINAL_ROTATION_TOLERANCE)
+        return self._timer.hasElapsed(self._timeout) or \
+            (self._pose_supplier().translation().distance(self._goal_state.pose.translation()) < FinalAlignmentCommandConstants.FINAL_POSE_TOLERANCE and \
+            abs(self._pose_supplier().rotation().degrees() - self._goal_state.pose.rotation().degrees()) < FinalAlignmentCommandConstants.FINAL_ROTATION_TOLERANCE)
